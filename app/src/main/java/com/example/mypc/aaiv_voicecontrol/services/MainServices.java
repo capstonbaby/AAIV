@@ -58,6 +58,17 @@ public class MainServices {
                     gender.add(faceDetected.faceAttributes.gender);
                 }
 
+                if (gender.size() == 1) {
+                    identifyResponse = "There is a " + (gender.get(0).equals("male") ? "man" : "women");
+                    identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
+                    Log.d("gender", gender.get(0));
+                } else if (gender.size() < 1) {
+                    identifyResponse = "No person detected";
+                    identifyResult  = new IdentifyResult(identifyResponse, NO_PERSON_DETECTED);
+                } else {
+                    identifyResponse = "There are " + gender.size() + " people.";
+                    identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
+                }
 
                 faceIds = TextUtils.join(",", listFaceIds);
 
