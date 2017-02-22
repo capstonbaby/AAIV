@@ -23,6 +23,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import retrofit2.Response;
 
@@ -39,7 +40,8 @@ public class MainServices {
     private String identifyResponse = "Identify Fail";
     IdentifyResult identifyResult;
     private String faceIds = "";
-    private String urlObject = "";
+    private String urlCloudsight = "";
+    private String urlClarifai = "";
 
     public IdentifyResult IdentifyPerson(String urlImage) {
 
@@ -158,14 +160,11 @@ public class MainServices {
     }
 
     public String DetectObject(String url) {
-        urlObject = "http://detectobject.herokuapp.com/cloudsight/v1.0/image?url=" + url;
         String nameObject = "";
         try {
-            JSONObject jsonObject = getJSONObjectFromURL(urlObject);
-            nameObject = jsonObject.getString("name");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Detect object fail";
+            nameObject = new ObjectService().execute(url).get();
+        } catch (Exception e){
+            Log.d("detectobject", "fail DetectObject in MainService");
         }
         return nameObject;
     }

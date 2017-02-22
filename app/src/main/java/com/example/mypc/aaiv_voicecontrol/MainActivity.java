@@ -257,6 +257,8 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                         case NEGATIVE:{
+                            MainServices m = new MainServices();
+                            m.DetectObject("http://res.cloudinary.com/debwqzo2g/image/upload/v1487612998/sample.jpg");
                             break;
                         }
                         case SHOW_LOGS:{
