@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">AAIV_VoiceControl</string>
+    <string name="action_settings">Settings</string>
+    <string name="camera_button">Camera Capture Button</string>
+    <string name="notification_fail">Image failed to upload...</string>
+    <string name="notification_share_link">Share link</string>
+    <string name="notifaction_success">Successfully uploaded</string>
+    <string name="notification_progress">Uploading image...</string>
+    <string name="notification_training_progress">Training...</string>
+    <string name="person_name">Name</string>
+    <string name="person_des">Descriptions</string>
+    <string name="bt_create_person">create person</string>
+    <string name="spinner_title">Person Groups</string>
+    <string name="capture_button">capture_button</string>
+    <string name="face_capture_button">Face Capture Button</string>
+    <string name="object_capture_button">Object Capture Button</string>
+    <string name="create_person_button">Create Person Button</string>
+    <string name="picture">Picture</string>
+    <string name="description_info">Info</string>
+    <string name="request_permission">This sample needs camera permission.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_cloudiary_test">CloudiaryTest</string>
+
+
+    <string name="kws_caption">To start demonstration say \"oh mighty computer\".</string>
+    <string name="menu_caption">Say \"face\", \"view\" or \"object\" to choose the grammar, language model or phonetic decoder example.</string>
+    <string name="digits_caption">To try recognition of digits: say something like \"one two three four five\".</string>
+    <string name="forecast_caption">To try recognition of a weather forecast like \"sunny spells on Wednesday\".</string>
+    <string name="phone_caption">To try phonetic recognition say anything.</string>
+</resources>
