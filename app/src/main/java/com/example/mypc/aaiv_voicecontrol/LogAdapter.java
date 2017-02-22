@@ -10,6 +10,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
 
 /**
@@ -22,11 +24,13 @@ public class LogAdapter extends RecyclerView.Adapter<LogAdapter.MyViewHolder> {
     public class MyViewHolder extends RecyclerView.ViewHolder{
         public ImageView iv_image;
         public TextView tv_createdate;
+        public TextView tv_name;
 
         public MyViewHolder(View itemView) {
             super(itemView);
             iv_image = (ImageView) itemView.findViewById(R.id.iv_log_image);
             tv_createdate = (TextView) itemView.findViewById(R.id.tv_createdate);
+            tv_name = (TextView) itemView.findViewById(R.id.tv_name);
         }
     }
 
@@ -47,6 +51,7 @@ public class LogAdapter extends RecyclerView.Adapter<LogAdapter.MyViewHolder> {
         LogResponse log = logList.get(position);
         Glide.with(ShowLogsActivity.getContext()).load(log.imgUrl).into(holder.iv_image);
         holder.tv_createdate.setText(log.createdate);
+        holder.tv_name.setText(log.name);
     }
 
     @Override

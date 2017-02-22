@@ -19,8 +19,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.mypc.aaiv_voicecontrol.data_model.CreateLogResponse;
-import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.IdentifyResult;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.example.mypc.aaiv_voicecontrol.services.MainServices;
@@ -28,10 +27,7 @@ import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import retrofit2.Call;
@@ -48,7 +44,11 @@ public class MainActivity extends AppCompatActivity {
     private final String ADD_PERSON_VIEW = "new person";
     private final String AFFIRMATIVE = "yes";
     private final String NEGATIVE = "no";
+    private final String CREATE_LOG_FILE = "save person";
     private final String SHOW_LOGS = "history";
+    private final int SPEECH_PERSON_NAME_CODE = 2;
+    private final String SPEECH_LANGUAGE_ENG = "en-US";
+    private final String SPEECH_LANGUAGE_VIE = "vi-VN";
 
     private final int PERSON_DETECTED_SUCCESSFULLY = 1;
     private final int PERSON_DETECTED_FAILED = 2;
@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Constants.setApiHost("192.168.43.51");
+        Constants.setApiHost("192.168.1.99");
         Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
 
         iv_preview = (ImageView) findViewById(R.id.iv_preview);
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             returnCompressedImageFile = (File) bundle.get("imagefile");
-            if(returnCompressedImageFile != null){
+            if (returnCompressedImageFile != null) {
                 Glide.with(this).load(returnCompressedImageFile.getAbsolutePath()).into(iv_preview);
                 mBackgroundHandler.post(new ImageUploader(cloudinary, returnCompressedImageFile));
             }
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         mVoiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startSpeechToText("Sẵn sàng");
+                startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
             }
         });
     }
@@ -135,18 +135,18 @@ public class MainActivity extends AppCompatActivity {
                             case FACE_RECOGNITION_MODE: {
                                 identifyResult = mainServices.IdentifyPerson(imgUrl);
                                 result = identifyResult.getIdentifyResponse();
-                                int status = identifyResult.getIdentifyStatus();
+                                final int status = identifyResult.getIdentifyStatus();
 
                                 mTvResult.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        mSpeechServices.sendGet(result);
                                         mTvResult.setText(result);
+                                        mSpeechServices.sendGet(result);
                                     }
                                 });
-
-                                if(status == PERSON_DETECTED_FAILED){
-                                    startSpeechToText("Bạn có muốn thêm người này ?");
+                                Thread.sleep(1500);
+                                if (status == PERSON_DETECTED_FAILED) {
+                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
                                 }
 
                                 break;
@@ -181,20 +181,22 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    public void startSpeechToText(String promt) {
+    public void startSpeechToText(String promt, int mode, String language) {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT, promt);
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, "9000");
 
         try {
-            startActivityForResult(intent, SPEECH_RECOGNITION_CODE);
+            startActivityForResult(intent, mode);
         } catch (ActivityNotFoundException e) {
             e.printStackTrace();
             Toast.makeText(this, "Speech recognition is not support for this device.", Toast.LENGTH_SHORT).show();
@@ -230,63 +232,67 @@ public class MainActivity extends AppCompatActivity {
                             startActivity(intent);
                             break;
                         }
-                        case REPEAT:{
+                        case REPEAT: {
                             mSpeechServices.sendGet(result);
                             break;
                         }
-                        case ADD_PERSON_VIEW:{
+                        case ADD_PERSON_VIEW: {
                             Intent intent = new Intent(this, AddPersonActivity.class);
                             startActivity(intent);
-                        }
-                        case AFFIRMATIVE:{
-                            DataService dataService = new DataService();
-                            dataService.CreateLog(imgUrl).enqueue(new Callback<CreateLogResponse>() {
-                                @Override
-                                public void onResponse(Call<CreateLogResponse> call, Response<CreateLogResponse> response) {
-                                    if(response.isSuccessful()){
-                                        Toast.makeText(MainActivity.this, "Log created at " + response.body().response.createdate, Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Call<CreateLogResponse> call, Throwable t) {
-                                    Log.d("createLog", "Create Log Fail");
-                                    t.printStackTrace();
-                                }
-                            });
                             break;
                         }
-                        case NEGATIVE:{
+                        case AFFIRMATIVE: {
+                            startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
                             break;
                         }
-                        case SHOW_LOGS:{
-                            DataService dataService = new DataService();
-                            dataService.GetAllLogFromUser("36a65953-8d12-46cd-9500-fc33e9123aaf").enqueue(new Callback<List<LogResponse>>() {
-                                @Override
-                                public void onResponse(Call<List<LogResponse>> call, Response<List<LogResponse>> response) {
-                                    if(response.isSuccessful()){
-                                        Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
-                                        Bundle args = new Bundle();
-                                        args.putSerializable("loglist", (Serializable) response.body());
-                                        intent.putExtra("bundle", args);
-                                        startActivity(intent);
-                                    }
-                                }
+                        case CREATE_LOG_FILE:{
+                            startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
+                            break;
+                        }
+                        case NEGATIVE: {
+                            break;
+                        }
+                        case SHOW_LOGS: {
+                            Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
+                            startActivity(intent);
 
-                                @Override
-                                public void onFailure(Call<List<LogResponse>> call, Throwable t) {
-
-                                }
-                            });
                             break;
                         }
                         default:
-                            startSpeechToText("Không hỗ trợ: " + text);
+                            Toast.makeText(this, "Không hỗ trợ: " + text, Toast.LENGTH_SHORT).show();
                             break;
                     }
                 }
                 break;
             }
+            case SPEECH_PERSON_NAME_CODE: {
+                if (resultCode == RESULT_OK && null != data) {
+                    ArrayList<String> results = data
+                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+
+                    String text = results.get(0).toLowerCase();
+                    Log.d("name", text);
+
+                    DataService dataService = new DataService();
+                    dataService.CreateLog(imgUrl, text).enqueue(new Callback<MessageResponse>() {
+                        @Override
+                        public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                            if (response.isSuccessful()) {
+                                Toast.makeText(MainActivity.this, "Log created at " + response.body().response.createdate, Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<MessageResponse> call, Throwable t) {
+                            Log.d("createLog", "Create Log Fail");
+                            t.printStackTrace();
+                        }
+                    });
+                }
+                break;
+            }
+            default:
+                break;
         }
     }
 

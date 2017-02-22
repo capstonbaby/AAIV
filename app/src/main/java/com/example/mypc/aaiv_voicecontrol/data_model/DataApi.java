@@ -13,11 +13,16 @@ import retrofit2.http.POST;
 
 public interface DataApi {
 
+    /*TODO: ADD USER ID AFTER IMPLIMENT LOGIN FUNCTION*/
     @FormUrlEncoded
     @POST("CreateLog")
-    Call<CreateLogResponse> CreateLog(@Field("ImageUrl") String ImageUrl);
+    Call<MessageResponse> CreateLog(@Field("ImageUrl") String ImageUrl, @Field("Name") String name);
 
     @FormUrlEncoded
     @POST("GetAllLogFromUser")
     Call<List<LogResponse>> GetAllLogFromUser(@Field("userid") String userid);
+
+    @FormUrlEncoded
+    @POST("DeactiveLog")
+    Call<MessageResponse> DeactiveLog(@Field("logId") int logId);
 }
