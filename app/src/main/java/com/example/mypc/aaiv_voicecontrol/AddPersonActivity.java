@@ -20,8 +20,10 @@ import android.widget.Toast;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.AddPersonResponse;
-import com.example.mypc.aaiv_voicecontrol.person_model.PersonGroup;
+import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.example.mypc.aaiv_voicecontrol.services.PersonServices;
 
 import java.io.File;
@@ -35,7 +37,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class AddPersonActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class AddPersonActivity extends AppCompatActivity {
 
     private String mImageLink;
     private TextInputLayout txtPersonName;
@@ -53,30 +55,35 @@ public class AddPersonActivity extends AppCompatActivity implements AdapterView.
     }
 
     private static final int REQUEST_IMAGE = 1;
+    private static final int REQUEST_IMAGE_SINGLE = 2;
+
+    private static int IMAGE_AMOUNT = 3;
 
     private GridView gridView;
     private GridViewAdapter gridAdapter;
 
-    private ArrayList<String> mImagePaths;
+    private ArrayList<String> mImagePaths = new ArrayList<>();
     private ArrayList<String> mCompressedImagePaths = new ArrayList<>();
 
     private Handler mHandler;
     private HandlerThread mBackgroundThread;
 
+    private LogResponse logFile;
+
     private static final Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", "debwqzo2g",
             "api_key", "852288139213848",
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
+    private int gridItemPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_person);
-
         context = getApplicationContext();
 
         //Constants.setApiHost("192.168.1.18");
-        Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
 
         txtPersonName = (TextInputLayout) findViewById(R.id.input_layout_name);
         txtPersonDes = (TextInputLayout) findViewById(R.id.input_layout_des);
@@ -84,12 +91,38 @@ public class AddPersonActivity extends AppCompatActivity implements AdapterView.
         fab_add_image = (FloatingActionButton) findViewById(R.id.fab_add_image);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
+        gridView = (GridView) findViewById(R.id.gridView);
+        gridAdapter = new GridViewAdapter(this, R.layout.grid_item_layout, mImagePaths);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MultiImageSelector.create(AddPersonActivity.this)
+                        .showCamera(true)
+                        .single()
+                        .start(AddPersonActivity.this, REQUEST_IMAGE_SINGLE);
+                gridItemPosition = position;
+            }
+        });
+        gridView.setAdapter(gridAdapter);
+
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
+            LogResponse log = (LogResponse) bundle.get("logfile");
+            if (log != null) {
+                logFile = log;
+                txtPersonName.getEditText().setText(logFile.name);
+                mImagePaths.add(logFile.imgUrl);
+                gridAdapter.notifyDataSetChanged();
+                IMAGE_AMOUNT = 2;
+            }
+        }
+
         fab_add_image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 MultiImageSelector.create(AddPersonActivity.this)
                         .showCamera(true) // show camera or not. true by default
-                        .count(3) // max select image size, 9 by default. used width #.multi()
+                        .count(IMAGE_AMOUNT) // max select image size, 9 by default. used width #.multi()
                         .multi() // multi mode, default mode;
                         .start(AddPersonActivity.this, REQUEST_IMAGE);
             }
@@ -98,7 +131,6 @@ public class AddPersonActivity extends AppCompatActivity implements AdapterView.
         bt_cretePerson.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 CreatePerson(txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString(), "friend");
             }
         });
@@ -137,64 +169,43 @@ public class AddPersonActivity extends AppCompatActivity implements AdapterView.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         StartThread();
-
-        mImagePaths = null;
-
-        if (requestCode != REQUEST_IMAGE) {
-            return;
-        }
-
         if (resultCode != RESULT_OK) {
             return;
         }
 
-        mImagePaths = data.getStringArrayListExtra(MultiImageSelector.EXTRA_RESULT);
-        //Safety check to prevent null pointer exception
-        if (mImagePaths == null || mImagePaths.isEmpty() || mImagePaths.size() > 3) return;
-
-        gridView = (GridView) findViewById(R.id.gridView);
-        gridAdapter = new GridViewAdapter(this, R.layout.grid_item_layout, mImagePaths);
-        gridView.setAdapter(gridAdapter);
-
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                for (String path :
-                        mImagePaths) {
-                    try {
-                        File imageFile = new File(path);
-                        File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                        Map uploadResult = null;
-                        uploadResult = cloudinary.uploader().upload(compressedImage, ObjectUtils.emptyMap());
-                        String url = (String) uploadResult.get("url");
-
-                        mCompressedImagePaths.add(url);
-                        Log.d("ImagePath", url);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+        switch (requestCode) {
+            case REQUEST_IMAGE: {
+                if (mImagePaths.size() >= 3) {
+                    new AlertDialog.Builder(AddPersonActivity.this)
+                            .setMessage("Không thể thêm nhiều quá 3 hình")
+                            .setTitle("Lưu ý !")
+                            .setPositiveButton("Ok", null)
+                            .show();
+                }else {
+                    mImagePaths.addAll(data.getStringArrayListExtra(MultiImageSelector.EXTRA_RESULT));
+                    gridAdapter.notifyDataSetChanged();
                 }
+                break;
             }
-        });
-    }
+            case REQUEST_IMAGE_SINGLE: {
+                mImagePaths.set(gridItemPosition,
+                        data.getStringArrayListExtra(MultiImageSelector.EXTRA_RESULT).get(0));
+                gridAdapter.notifyDataSetChanged();
+                break;
+            }
+        }
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        PersonGroup item = (PersonGroup) parent.getItemAtPosition(position);
-        personGroupId = item.getPersonGroupId();
-        Log.d("GroupId", item.getPersonGroupId() + " | " + item.name);
-    }
+        //Safety check to prevent null pointer exception
+        //if (mImagePaths == null || mImagePaths.isEmpty() || mImagePaths.size() > 3) return;
 
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
 
     }
 
     public void CreatePerson(String name, final String des, final String personGroupId) {
 
         final PersonServices personServices = new PersonServices();
+        final DataService dataService = new DataService();
 
         progressBar.setVisibility(View.VISIBLE);
 
@@ -209,13 +220,40 @@ public class AddPersonActivity extends AppCompatActivity implements AdapterView.
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            for (String imgurl :
-                                    mCompressedImagePaths) {
+                            for (String path :
+                                    mImagePaths) {
                                 try {
-                                    personServices.AddPersonFace(personGroupId, personId, imgurl, des).execute();
+                                    File imageFile = new File(path);
+                                    if(imageFile.exists()){
+                                        File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
+                                        Map uploadResult = null;
+                                        uploadResult = cloudinary.uploader().upload(compressedImage, ObjectUtils.emptyMap());
+                                        String url = (String) uploadResult.get("url");
+
+                                        personServices.AddPersonFace(personGroupId, personId, url, des).execute();
+                                        Log.d("ImagePath", url);
+                                    }else{
+                                        personServices.AddPersonFace(personGroupId, personId, path, des).execute();
+                                    }
+
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
+                            }
+                            if(logFile != null){
+                                dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
+                                    @Override
+                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                        if(response.isSuccessful()){
+                                            Log.d("deactivelog", response.body().message);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
+
+                                    }
+                                });
                             }
                             TrainGroup(personGroupId);
                         }
@@ -276,4 +314,6 @@ public class AddPersonActivity extends AppCompatActivity implements AdapterView.
             }
         });
     }
+
+
 }

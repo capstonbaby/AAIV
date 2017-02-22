@@ -2,7 +2,7 @@ package com.example.mypc.aaiv_voicecontrol.services;
 
 import com.example.mypc.aaiv_voicecontrol.Constants;
 import com.example.mypc.aaiv_voicecontrol.data_model.DataApi;
-import com.example.mypc.aaiv_voicecontrol.data_model.CreateLogResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 
 import java.util.List;
@@ -19,11 +19,18 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataService {
 
-    public Call<CreateLogResponse> CreateLog(String ImageUrl){
+    public Call<MessageResponse> DeactiveLog(int logId){
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
-        return dataApi.CreateLog(ImageUrl);
+        return dataApi.DeactiveLog(logId);
+    }
+
+    public Call<MessageResponse> CreateLog(String ImageUrl, String name){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.CreateLog(ImageUrl, name);
     }
 
     public Call<List<LogResponse>> GetAllLogFromUser(String userId){

@@ -10,4 +10,5 @@ public class LogResponse implements Serializable{
     public int id;
     public String imgUrl;
     public String createdate;
+    public String name;
 }

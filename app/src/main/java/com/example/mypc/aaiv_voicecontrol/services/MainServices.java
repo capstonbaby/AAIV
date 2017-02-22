@@ -89,7 +89,7 @@ public class MainServices {
                                 Log.d("Identify", candidate.personId);
                                 Person person = service.GetPersonById("friend", candidate.personId).execute().body();
                                 if (person != null) {
-                                    identifyResponse = person.name + " " + person.userData;
+                                    identifyResponse = person.name;
                                     identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_SUCCESSFULLY);
                                 } else {
                                     Log.e("Person", "Can't get person");
