@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -66,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView iv_preview;
     private ImageButton mVoiceButton;
     private TextView mTvResult;
+    private EditText mTxtIp;
 
     private File returnCompressedImageFile;
 
@@ -88,11 +90,11 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Constants.setApiHost("192.168.1.99");
-        Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
 
         iv_preview = (ImageView) findViewById(R.id.iv_preview);
         mTvResult = (TextView) findViewById(R.id.txtResult);
+        mTxtIp = (EditText) findViewById(R.id.et_ip);
+
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             returnCompressedImageFile = (File) bundle.get("imagefile");
@@ -109,6 +111,12 @@ public class MainActivity extends AppCompatActivity {
                 startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
             }
         });
+    }
+
+    public void setIpAddress(View view) {
+        String ip = String.valueOf(mTxtIp.getText());
+        Constants.setApiHost(ip);
+        Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
     }
 
     private class ImageUploader implements Runnable {

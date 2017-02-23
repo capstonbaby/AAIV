@@ -41,4 +41,21 @@
         android:layout_alignParentStart="true"
         android:layout_marginBottom="7dp" />
 
+    <EditText
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/et_ip"
+        android:layout_marginBottom="46dp"
+        android:layout_above="@+id/txtResult"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="set"
+        android:onClick="setIpAddress"
+        android:id="@+id/button"
+        android:layout_alignTop="@+id/et_ip"
+        android:layout_toEndOf="@+id/et_ip" />
+
 </RelativeLayout>
