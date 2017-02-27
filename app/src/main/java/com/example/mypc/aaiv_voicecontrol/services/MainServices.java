@@ -27,21 +27,20 @@ import java.util.concurrent.ExecutionException;
 
 import retrofit2.Response;
 
+import static com.example.mypc.aaiv_voicecontrol.Constants.NO_PERSON_DETECTED;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
+
 /**
  * Created by MyPC on 02/06/2017.
  */
 
 public class MainServices {
-    private final int PERSON_DETECTED_SUCCESSFULLY = 1;
-    private final int PERSON_DETECTED_FAILED = 2;
-    private final int NO_PERSON_DETECTED = 3;
-
 
     private String identifyResponse = "Identify Fail";
     IdentifyResult identifyResult;
     private String faceIds = "";
-    private String urlCloudsight = "";
-    private String urlClarifai = "";
+    private SpeechServices mSpeechServices = new SpeechServices();
 
     public IdentifyResult IdentifyPerson(String urlImage) {
 
@@ -61,15 +60,15 @@ public class MainServices {
                 }
 
                 if (gender.size() == 1) {
-                    identifyResponse = "There is a " + (gender.get(0).equals("male") ? "man" : "women");
-                    identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
+                    identifyResponse = "Có một người " + (gender.get(0).equals("male") ? "đàn ông" : "phụ nữ");
+                    identifyResult = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
                     Log.d("gender", gender.get(0));
                 } else if (gender.size() < 1) {
-                    identifyResponse = "No person detected";
-                    identifyResult  = new IdentifyResult(identifyResponse, NO_PERSON_DETECTED);
+                    identifyResponse = "Không có ai cả";
+                    identifyResult = new IdentifyResult(identifyResponse, NO_PERSON_DETECTED);
                 } else {
-                    identifyResponse = "There are " + gender.size() + " people.";
-                    identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
+                    identifyResponse = "Có " + gender.size() + " người.";
+                    identifyResult = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
                 }
 
                 faceIds = TextUtils.join(",", listFaceIds);
@@ -90,20 +89,20 @@ public class MainServices {
                                 Person person = service.GetPersonById("friend", candidate.personId).execute().body();
                                 if (person != null) {
                                     identifyResponse = person.name;
-                                    identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_SUCCESSFULLY);
+                                    identifyResult = new IdentifyResult(identifyResponse, PERSON_DETECTED_SUCCESSFULLY);
                                 } else {
                                     Log.e("Person", "Can't get person");
 
                                     if (gender.size() == 1) {
                                         identifyResponse = "There is a " + (gender.get(0).equals("male") ? "man" : "women");
-                                        identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
+                                        identifyResult = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
                                         Log.d("gender", gender.get(0));
                                     } else if (gender.size() < 1) {
                                         identifyResponse = "No person detected";
-                                        identifyResult  = new IdentifyResult(identifyResponse, NO_PERSON_DETECTED);
+                                        identifyResult = new IdentifyResult(identifyResponse, NO_PERSON_DETECTED);
                                     } else {
                                         identifyResponse = "There are " + gender.size() + " people.";
-                                        identifyResult  = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
+                                        identifyResult = new IdentifyResult(identifyResponse, PERSON_DETECTED_FAILED);
                                     }
 
                                     Log.d("identify", identifyResponse);
@@ -126,22 +125,6 @@ public class MainServices {
         return identifyResult;
     }
 
-    public List<PersonGroup> GetPersonGroupSync() {
-        PersonServices personServices = new PersonServices();
-        List<PersonGroup> personGroups = null;
-        try {
-            Response<List<PersonGroup>> response = personServices.GetPersonGroupSync().execute();
-            if (response.isSuccessful()) {
-                personGroups = response.body();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return personGroups;
-    }
-
-
     public VisionResponse DetectVision(String url) {
         VisionResponse visionResponse = null;
 
@@ -163,9 +146,10 @@ public class MainServices {
         String nameObject = "";
         try {
             nameObject = new ObjectService().execute(url).get();
-        } catch (Exception e){
+        } catch (Exception e) {
             Log.d("detectobject", "fail DetectObject in MainService");
         }
+
         return nameObject;
     }
 

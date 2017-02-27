@@ -1,8 +1,10 @@
 package com.example.mypc.aaiv_voicecontrol;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,6 +15,7 @@ import android.widget.ProgressBar;
 import com.example.mypc.aaiv_voicecontrol.Utils.DividerItemDecoration;
 import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 
 import java.util.ArrayList;
@@ -46,7 +49,7 @@ public class ShowLogsActivity extends AppCompatActivity {
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_logs);
 
         mProgressBar.setVisibility(View.VISIBLE);
-        DataService dataService = new DataService();
+        final DataService dataService = new DataService();
         dataService.GetAllLogFromUser("36a65953-8d12-46cd-9500-fc33e9123aaf").enqueue(new Callback<List<LogResponse>>() {
             @Override
             public void onResponse(Call<List<LogResponse>> call, Response<List<LogResponse>> response) {
@@ -70,7 +73,33 @@ public class ShowLogsActivity extends AppCompatActivity {
 
                             @Override
                             public void onLongClick(View view, int position) {
+                                final LogResponse log = logList.get(position);
 
+                                new AlertDialog.Builder(ShowLogsActivity.this)
+                                        .setTitle("Xóa")
+                                        .setMessage("Bạn có chắc chắn muốn xóa ?")
+                                        .setIcon(android.R.drawable.ic_dialog_alert)
+                                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int whichButton) {
+                                                dataService.DeactiveLog(log.id).enqueue(new Callback<MessageResponse>() {
+                                                    @Override
+                                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                                        finish();
+                                                        startActivity(getIntent());
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
+                                                        new AlertDialog.Builder(ShowLogsActivity.this)
+                                                                .setTitle("Thất bại")
+                                                                .setMessage("Xóa thất bại")
+                                                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                                                .setNegativeButton(android.R.string.cancel, null).show();
+                                                    }
+                                                });
+                                            }
+                                        })
+                                        .setNegativeButton(android.R.string.no, null).show();
                             }
                         }));
 

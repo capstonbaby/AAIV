@@ -3,6 +3,7 @@ package com.example.mypc.aaiv_voicecontrol;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -25,6 +26,8 @@ import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.AddPersonResponse;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.example.mypc.aaiv_voicecontrol.services.PersonServices;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,6 +104,15 @@ public class AddPersonActivity extends AppCompatActivity {
                         .single()
                         .start(AddPersonActivity.this, REQUEST_IMAGE_SINGLE);
                 gridItemPosition = position;
+            }
+        });
+        gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                CropImage.activity(Uri.fromFile(new File(mImagePaths.get(position))))
+                        .setGuidelines(CropImageView.Guidelines.ON)
+                        .start(AddPersonActivity.this);
+                return true;
             }
         });
         gridView.setAdapter(gridAdapter);
@@ -314,6 +326,4 @@ public class AddPersonActivity extends AppCompatActivity {
             }
         });
     }
-
-
 }

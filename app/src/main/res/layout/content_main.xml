@@ -55,7 +55,8 @@
         android:text="set"
         android:onClick="setIpAddress"
         android:id="@+id/button"
-        android:layout_alignTop="@+id/et_ip"
-        android:layout_toEndOf="@+id/et_ip" />
+        android:layout_alignBaseline="@+id/et_ip"
+        android:layout_alignBottom="@+id/et_ip"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

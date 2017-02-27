@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -20,6 +22,10 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mypc.aaiv_voicecontrol.Speech.SpeechAPIService;
+import com.example.mypc.aaiv_voicecontrol.Speech.SpeechApiUtils;
+import com.example.mypc.aaiv_voicecontrol.Translation.TranslationAPIService;
+import com.example.mypc.aaiv_voicecontrol.Translation.TranslationApiUtils;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.IdentifyResult;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
@@ -29,31 +35,34 @@ import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_PERSON_VIEW;
+import static com.example.mypc.aaiv_voicecontrol.Constants.AFFIRMATIVE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.CREATE_LOG_FILE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.FACE_RECOGNITION_MODE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.NEGATIVE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.NO_PERSON_DETECTED;
+import static com.example.mypc.aaiv_voicecontrol.Constants.OBJECT_RECOGNITION_MODE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
+import static com.example.mypc.aaiv_voicecontrol.Constants.REPEAT;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SHOW_LOGS;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_ENG;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_VIE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_CONFIRMATION;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_PERSON_NAME_CODE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_RECOGNITION_CODE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE;
+
 public class MainActivity extends AppCompatActivity {
 
-    private final int SPEECH_RECOGNITION_CODE = 1;
-    private final String FACE_RECOGNITION_MODE = "face";
-    private final String OBJECT_RECOGNITION_MODE = "object";
-    private final String VIEW_RECOGNITION_MODE = "view";
-    private final String REPEAT = "repeat";
-    private final String ADD_PERSON_VIEW = "new person";
-    private final String AFFIRMATIVE = "yes";
-    private final String NEGATIVE = "no";
-    private final String CREATE_LOG_FILE = "save person";
-    private final String SHOW_LOGS = "history";
-    private final int SPEECH_PERSON_NAME_CODE = 2;
-    private final String SPEECH_LANGUAGE_ENG = "en-US";
-    private final String SPEECH_LANGUAGE_VIE = "vi-VN";
-
-    private final int PERSON_DETECTED_SUCCESSFULLY = 1;
-    private final int PERSON_DETECTED_FAILED = 2;
-    private final int NO_PERSON_DETECTED = 3;
 
     private MainServices mainServices = new MainServices();
     Map uploadResult = null;
@@ -61,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
             "cloud_name", "debwqzo2g",
             "api_key", "852288139213848",
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
+
+    private static final String key = "AIzaSyDOi-0A_dUQ0CDIQU_ku2SiYpdZxwP6BtY";
+    private static final String source = "en";
+    private static final String target = "vi";
+    private TranslationAPIService mTranslationAPIService = TranslationApiUtils.getAPIService();
+    private static final SpeechAPIService mAPIService = SpeechApiUtils.getAPIService();
 
     private TextView txtOutput;
     private FloatingActionButton fab;
@@ -73,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
     String imgUrl;
 
-    SpeechServices mSpeechServices = new SpeechServices();
+    private SpeechServices mSpeechServices = new SpeechServices();
     String result = "";
     IdentifyResult identifyResult;
 
@@ -82,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
 
     String capture_mode;
 
+    private TextToSpeech mTextToSpeech;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        SetUpText2Speech();
 
         iv_preview = (ImageView) findViewById(R.id.iv_preview);
         mTvResult = (TextView) findViewById(R.id.txtResult);
@@ -111,6 +128,18 @@ public class MainActivity extends AppCompatActivity {
                 startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startBackgroundThread();
+    }
+
+    @Override
+    protected void onPause() {
+        stopBackgroundThread();
+        super.onPause();
     }
 
     public void setIpAddress(View view) {
@@ -142,19 +171,35 @@ public class MainActivity extends AppCompatActivity {
                         switch (capture_mode) {
                             case FACE_RECOGNITION_MODE: {
                                 identifyResult = mainServices.IdentifyPerson(imgUrl);
-                                result = identifyResult.getIdentifyResponse();
-                                final int status = identifyResult.getIdentifyStatus();
+                                if (identifyResult != null) {
+                                    result = identifyResult.getIdentifyResponse();
+                                    final int status = identifyResult.getIdentifyStatus();
 
-                                mTvResult.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mTvResult.setText(result);
-                                        mSpeechServices.sendGet(result);
+                                    mTvResult.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mTvResult.setText(result);
+                                        }
+                                    });
+
+                                    switch (status) {
+                                        case PERSON_DETECTED_FAILED: {
+                                            Speak(result, SPEECH_ONDONE_CONFIRMATION);
+                                            break;
+                                        }
+                                        case NO_PERSON_DETECTED: {
+                                            Speak(result, SPEECH_ONDONE_NOREQUEST);
+                                            break;
+                                        }
+                                        case PERSON_DETECTED_SUCCESSFULLY: {
+                                            Speak(result, SPEECH_ONDONE_NOREQUEST);
+                                            break;
+                                        }
+                                        default:
+                                            break;
                                     }
-                                });
-                                Thread.sleep(1500);
-                                if (status == PERSON_DETECTED_FAILED) {
-                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
+                                } else {
+                                    Speak("Nhận diện thất bại", SPEECH_ONDONE_NOREQUEST);
                                 }
 
                                 break;
@@ -164,10 +209,10 @@ public class MainActivity extends AppCompatActivity {
                                 mTvResult.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        mSpeechServices.sendGet(result);
                                         mTvResult.setText(result);
                                     }
                                 });
+                                mSpeechServices.sendGet(result, mTextToSpeech);
                                 break;
                             }
                             case VIEW_RECOGNITION_MODE: {
@@ -175,10 +220,10 @@ public class MainActivity extends AppCompatActivity {
                                 mTvResult.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        mSpeechServices.sendGet(result);
                                         mTvResult.setText(result);
                                     }
                                 });
+                                mSpeechServices.sendGet(result, mTextToSpeech);
                                 break;
                             }
 
@@ -189,25 +234,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-        }
-    }
-
-    public void startSpeechToText(String promt, int mode, String language) {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, promt);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, "9000");
-
-        try {
-            startActivityForResult(intent, mode);
-        } catch (ActivityNotFoundException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Speech recognition is not support for this device.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -241,7 +268,9 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                         case REPEAT: {
-                            mSpeechServices.sendGet(result);
+                            if (result != "") {
+                                mSpeechServices.sendGet(result, mTextToSpeech);
+                            }
                             break;
                         }
                         case ADD_PERSON_VIEW: {
@@ -253,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
                             startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
                             break;
                         }
-                        case CREATE_LOG_FILE:{
+                        case CREATE_LOG_FILE: {
                             startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
                             break;
                         }
@@ -304,16 +333,72 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startBackgroundThread();
+    public void startSpeechToText(String promt, int mode, String language) {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, promt);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, "9000");
+
+        try {
+            Speak(promt, SPEECH_ONDONE_NOREQUEST);
+            Thread.sleep(1000);
+            startActivityForResult(intent, mode);
+        } catch (ActivityNotFoundException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Speech recognition is not support for this device.", Toast.LENGTH_SHORT).show();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    @Override
-    protected void onPause() {
-        stopBackgroundThread();
-        super.onPause();
+    private void SetUpText2Speech() {
+        mTextToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status != TextToSpeech.ERROR) {
+                    mTextToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String utteranceId) {
+
+                        }
+
+                        @Override
+                        public void onDone(String utteranceId) {
+                            switch (utteranceId) {
+                                case SPEECH_ONDONE_CONFIRMATION: {
+                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
+                                    break;
+                                }
+                                case SPEECH_ONDONE_NOREQUEST: {
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
+                        }
+
+                        @Override
+                        public void onError(String utteranceId) {
+
+                        }
+                    });
+
+                    mTextToSpeech.setLanguage(new Locale("vi", "VN"));
+
+                    Log.d("setupt2s", "Setup finished");
+                } else if (status == TextToSpeech.ERROR) {
+                    Toast.makeText(MainActivity.this, "Setup Speech Failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void Speak(String text, final String request) {
+        if (mTextToSpeech != null) {
+            mTextToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, request);
+        }
     }
 
     private void stopBackgroundThread() {

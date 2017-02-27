@@ -2,6 +2,7 @@ package com.example.mypc.aaiv_voicecontrol.services;
 
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -65,19 +66,18 @@ public class SpeechServices {
         });
     }
 
-    public void sendGet(String src){
-
+    public void sendGet(String src, final TextToSpeech textToSpeech){
         String key = "AIzaSyDOi-0A_dUQ0CDIQU_ku2SiYpdZxwP6BtY";
         String source = "en";
         String target = "vi";
-        transApiService.saveGet(key,source,target,src).enqueue(new Callback<Get>() {
 
+        transApiService.saveGet(key,source,target,src).enqueue(new Callback<Get>() {
             @Override
             public void onResponse(Call<Get> call, Response<Get> response) {
                 Log.d("load", response.body().toString());
                 if (response.isSuccessful()){
-                    String tranlatedText = response.body().getData().getTranslations().get(0).getTranslatedText();
-                    sendPost(tranlatedText);
+                    String mTranslatedString = response.body().getData().getTranslations().get(0).getTranslatedText();
+                    textToSpeech.speak(mTranslatedString, TextToSpeech.QUEUE_FLUSH, null);
                 }
             }
 
@@ -89,4 +89,6 @@ public class SpeechServices {
         });
 
     }
+
+
 }
