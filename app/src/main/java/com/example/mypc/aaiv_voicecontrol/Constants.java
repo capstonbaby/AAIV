@@ -59,6 +59,8 @@ public class Constants {
     public static final String NEGATIVE = "no";
     public static final String CREATE_LOG_FILE = "save person";
     public static final String SHOW_LOGS = "history";
+    public static final String STREAM_DETECT = "stream";
+
     public static final int SPEECH_PERSON_NAME_CODE = 2;
     public static final String SPEECH_LANGUAGE_ENG = "en-US";
     public static final String SPEECH_LANGUAGE_VIE = "vi-VN";
@@ -70,4 +72,8 @@ public class Constants {
     public static final int PERSON_DETECTED_FAILED = 2;
     public static final int NO_PERSON_DETECTED = 3;
 
+    public static final String ADD_NEW_PERSON_MODE = "new";
+    public static final String UPDATE_PERSON_MODE = "update";
+
+    public static final String PersonGroupId = "friend";
 }

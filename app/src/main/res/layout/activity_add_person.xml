@@ -55,16 +55,6 @@
 
     </android.support.design.widget.TextInputLayout>
 
-    <!--<Spinner-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/sp_person_group"-->
-        <!--android:layout_marginTop="16dp"-->
-        <!--android:layout_below="@+id/input_layout_des"-->
-        <!--android:prompt="@string/spinner_title">-->
-
-    <!--</Spinner>-->
-
     <ProgressBar
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
@@ -72,16 +62,6 @@
         android:id="@+id/progressBar"
         android:visibility="invisible"
         android:layout_centerInParent="true" />
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/bt_create"
-        android:text="@string/bt_create_person"
-        android:layout_below="@+id/progressBar"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="28dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_add_image"
@@ -92,5 +72,20 @@
         android:layout_alignBottom="@+id/progressBar"
         android:layout_alignRight="@+id/gridView"
         android:layout_alignEnd="@+id/gridView" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/bt_create"
+        android:text="@string/bt_create_person"
+        android:layout_marginTop="57dp"
+        android:layout_below="@+id/input_layout_des"
+        android:layout_alignParentStart="true" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/bt_train"
+        android:layout_below="@id/bt_create"
+        android:text="@string/train_button"/>
 
 </RelativeLayout>

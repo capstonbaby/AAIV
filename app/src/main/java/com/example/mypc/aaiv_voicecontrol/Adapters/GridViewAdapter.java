@@ -1,4 +1,4 @@
-package com.example.mypc.aaiv_voicecontrol;
+package com.example.mypc.aaiv_voicecontrol.Adapters;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.example.mypc.aaiv_voicecontrol.R;
 
 import java.util.ArrayList;
 

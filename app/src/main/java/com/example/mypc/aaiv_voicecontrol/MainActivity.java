@@ -42,6 +42,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_PERSON_VIEW;
 import static com.example.mypc.aaiv_voicecontrol.Constants.AFFIRMATIVE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.CREATE_LOG_FILE;
@@ -59,6 +60,7 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_CONFIRM
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_PERSON_NAME_CODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_RECOGNITION_CODE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.STREAM_DETECT;
 import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE;
 
 public class MainActivity extends AppCompatActivity {
@@ -275,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         case ADD_PERSON_VIEW: {
                             Intent intent = new Intent(this, AddPersonActivity.class);
+                            intent.putExtra("mode", ADD_NEW_PERSON_MODE);
                             startActivity(intent);
                             break;
                         }
@@ -293,6 +296,11 @@ public class MainActivity extends AppCompatActivity {
                             Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
                             startActivity(intent);
 
+                            break;
+                        }
+                        case STREAM_DETECT:{
+                            Intent intent = new Intent(this, CloudiaryTest.class);
+                            startActivity(intent);
                             break;
                         }
                         default:

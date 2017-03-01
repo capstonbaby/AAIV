@@ -29,8 +29,6 @@ public class CloudiaryTest extends AppCompatActivity {
 
         context = getApplicationContext();
 
-
-
         CameraStreamFragment fragment = CameraStreamFragment.newInstance();
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
         fragmentTransaction.addToBackStack(null);
