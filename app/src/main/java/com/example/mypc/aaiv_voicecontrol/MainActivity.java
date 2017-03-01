@@ -212,7 +212,8 @@ public class MainActivity extends AppCompatActivity {
                                         mTvResult.setText(result);
                                     }
                                 });
-                                mSpeechServices.sendGet(result, mTextToSpeech);
+                                //mSpeechServices.sendGet(result, mTextToSpeech);
+                                mSpeechServices.sendPost(result);
                                 break;
                             }
                             case VIEW_RECOGNITION_MODE: {
