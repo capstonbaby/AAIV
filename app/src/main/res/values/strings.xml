@@ -9,7 +9,7 @@
     <string name="notification_training_progress">Training...</string>
     <string name="person_name">Name</string>
     <string name="person_des">Descriptions</string>
-    <string name="bt_create_person">create person</string>
+    <string name="bt_create_person">save</string>
     <string name="spinner_title">Person Groups</string>
     <string name="capture_button">capture_button</string>
     <string name="face_capture_button">Face Capture Button</string>
@@ -30,4 +30,5 @@
     <string name="digits_caption">To try recognition of digits: say something like \"one two three four five\".</string>
     <string name="forecast_caption">To try recognition of a weather forecast like \"sunny spells on Wednesday\".</string>
     <string name="phone_caption">To try phonetic recognition say anything.</string>
+    <string name="train_button">Train</string>
 </resources>

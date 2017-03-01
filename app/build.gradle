@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.0"
     defaultConfig {
         applicationId "com.example.mypc.aaiv_voicecontrol"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -39,4 +39,6 @@ dependencies {
     compile 'id.zelory:compressor:1.0.4'
     compile 'com.github.lovetuzitong:MultiImageSelector:1.2'
     compile 'com.android.support:recyclerview-v7:25.1.0'
+    compile 'com.microsoft.projectoxford:face:1.2.1'
+    compile 'com.theartofdev.edmodo:android-image-cropper:2.3.+'
 }

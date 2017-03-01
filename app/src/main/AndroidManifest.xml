@@ -25,7 +25,9 @@
             android:theme="@style/AppTheme.NoActionBar">
 
         </activity>
-        <activity android:name=".AddPersonActivity" />
+        <activity android:name=".AddPersonActivity">
+
+        </activity>
         <activity
             android:name=".CameraActivity_2"
             android:theme="@style/AppTheme.NoActionBar" />
@@ -44,6 +46,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="me.nereo.multi_image_selector.MultiImageSelectorActivity"
+            android:configChanges="orientation|screenSize" />
+        <activity android:name=".ShowLogsActivity">
+
+        </activity>
+        <activity
+            android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat" /> <!-- optional (needed if default theme has no action bar) -->
+        <activity android:name=".UpdatePersonActivity">
+
         </activity>
     </application>
 
