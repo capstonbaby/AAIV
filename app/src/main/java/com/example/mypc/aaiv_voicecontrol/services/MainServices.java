@@ -5,6 +5,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.mypc.aaiv_voicecontrol.CameraActivity_2;
+import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.Candidate;
 import com.example.mypc.aaiv_voicecontrol.person_model.FaceDetectResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.FaceIdentifyResponse;
@@ -18,13 +19,13 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 
 import static com.example.mypc.aaiv_voicecontrol.Constants.NO_PERSON_DETECTED;
@@ -144,50 +145,48 @@ public class MainServices {
     }
 
     public String DetectObject(String url) {
-        String nameObject = "";
+        JSONObject outputPart = null;
+        JSONObject firstConcept = null;
+        String valueStr = "";
+        JSONObject jsonClarifai  = null;
+        String returnValue = "";
+
+        ObjectService objectService = new ObjectService();
         try {
-            nameObject = new ObjectService().execute(url).get();
+            Response<ResponseBody> response = objectService.DetectObject(url).execute();
+
+            String jsonStr = response.body().string();
+            jsonClarifai = new JSONObject(jsonStr);
+
+            outputPart = (JSONObject) jsonClarifai.getJSONArray("outputs").get(0);
+            firstConcept = (JSONObject) outputPart.getJSONObject("data").getJSONArray("concepts").get(0);
+            valueStr = firstConcept.getString("value");
+            if(Double.parseDouble(valueStr) > 0.7){
+                returnValue =  firstConcept.getString("id");
+            }else{
+                objectService.CreateLog(url).enqueue(new Callback<MessageResponse>() {
+                    @Override
+                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                        Log.d("createLog", "onReponse function");
+                    }
+
+                    @Override
+                    public void onFailure(Call<MessageResponse> call, Throwable t) {
+                        Log.d("createLog", "Create Log Fail");
+                        t.printStackTrace();
+                    }
+                });
+                returnValue = "Không xác định được vật thể";
+            }
         } catch (Exception e) {
-            Log.d("detectobject", "fail DetectObject in MainService");
+            e.printStackTrace();
+            Log.d("detectobject", "error when detect object MainService");
+            returnValue = "Máy chủ bị lỗi";
         }
 
-        return nameObject;
+        return returnValue;
     }
 
-    public static JSONObject getJSONObjectFromURL(String urlString) throws IOException, JSONException {
 
-        HttpURLConnection urlConnection = null;
-
-        URL url = new URL(urlString);
-
-        urlConnection = (HttpURLConnection) url.openConnection();
-
-        urlConnection.setRequestMethod("GET");
-        urlConnection.setReadTimeout(10000 /* milliseconds */);
-        urlConnection.setConnectTimeout(15000 /* milliseconds */);
-
-        urlConnection.setDoOutput(true);
-
-        urlConnection.connect();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-        char[] buffer = new char[1024];
-
-        String jsonString = new String();
-
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line + "\n");
-        }
-        br.close();
-
-        jsonString = sb.toString();
-
-        System.out.println("JSON: " + jsonString);
-
-        return new JSONObject(jsonString);
-    }
 
 }

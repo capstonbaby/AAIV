@@ -22,6 +22,7 @@ public class Constants {
     public static final String FACE_API = "api/face/";
     public static final String EMOTION_API = "api/emotion/";
     public static final String DATA_API = "data/";
+    public static final String Object_API = "api/object/";
 
     public static void setApiHost(String hostApi) {
         API_HOST = "http://" + hostApi + "/CapstoneProject.WebAPI/";
@@ -33,6 +34,10 @@ public class Constants {
 
     public static String getVisionAPIString() {
         return API_HOST + VISION_API;
+    }
+
+    public  static  String getObjectAPIString(){
+        return  API_HOST + Object_API;
     }
 
     public static String getFaceAPIString() {

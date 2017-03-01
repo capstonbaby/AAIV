@@ -1,102 +1,68 @@
 package com.example.mypc.aaiv_voicecontrol.services;
 
-import android.os.AsyncTask;
-import android.util.Log;
 
-import org.json.JSONException;
+import com.example.mypc.aaiv_voicecontrol.Constants;
+import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
+import com.example.mypc.aaiv_voicecontrol.object_model.ObjectApi;
+
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * Created by 2TbP on 2/23/2017.
  */
-public class ObjectService extends AsyncTask<String, Void, String> {
-    private String urlClarifai = "";
-    private String urlCloudsight = "";
-    @Override
-    protected String doInBackground(String[] params) {
-        //String url = "http://res.cloudinary.com/debwqzo2g/image/upload/v1487612998/sample.jpg";
-        String returnValue = "";
-        String urlImage = params[0];
-        urlClarifai = "http://detectobject.herokuapp.com/clarifai/v1.0/image?url=" + urlImage;
-        JSONObject jsonClarifai = null;
-        JSONObject outputPart = null;
-        JSONObject firstConcept = null;
-        String valueStr = "";
-        try {
-            jsonClarifai = getJSONObjectFromURL(urlClarifai);
-            outputPart = (JSONObject) jsonClarifai.getJSONArray("outputs").get(0);
-            firstConcept = (JSONObject) outputPart.getJSONObject("data").getJSONArray("concepts").get(0);
-            valueStr = firstConcept.getString("value");
-            if(Double.parseDouble(valueStr) > 0.6){
-                returnValue =  firstConcept.getString("id");
-            }else {
-                returnValue = UseCloudsight(urlImage);
-            }
-        } catch (Exception e){
-            Log.d("clarifai", "detect object clarifai fail");
-            returnValue = UseCloudsight(urlImage);
-        }
-        return returnValue;
+public class ObjectService {
+    public Call<ResponseBody> DetectObject(String url){
+        Retrofit retrofit = getRetrofitObjectDetect();
+        ObjectApi objectApi = retrofit.create(ObjectApi.class);
+
+        String test = String.valueOf(objectApi.DetectObject(url));
+
+        return objectApi.DetectObject(url);
     }
 
-    public String UseCloudsight(String url){
-        urlCloudsight = "http://detectobject.herokuapp.com/cloudsight/v1.0/image?url=" + url;
-        String nameObject = "";
-        try {
-            JSONObject jsonObject = getJSONObjectFromURL(urlCloudsight);
-            nameObject = jsonObject.getString("name");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Detect object fail";
-        }
-        return nameObject;
+    public Retrofit getRetrofitObjectDetect() {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .addInterceptor(logging)
+                .build();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.getObjectAPIString())
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client)
+                .build();
+
+        return retrofit;
     }
 
+    public Retrofit getRetrofitObjectDetectCreateLog() {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-    @Override
-    protected void onPostExecute(String message) {
-        //process message
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .addInterceptor(logging)
+                .build();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.getDataAPIString())
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client)
+                .build();
+
+        return retrofit;
     }
 
-    public JSONObject getJSONObjectFromURL(String urlString) throws IOException, JSONException {
+    public Call<MessageResponse> CreateLog(String ImageUrl){
+        Retrofit retrofit = getRetrofitObjectDetectCreateLog();
+        ObjectApi objectApi = retrofit.create(ObjectApi.class);
 
-        HttpURLConnection urlConnection = null;
-
-        URL url = new URL(urlString);
-
-        urlConnection = (HttpURLConnection) url.openConnection();
-
-        urlConnection.setRequestMethod("GET");
-        urlConnection.setReadTimeout(10000 /* milliseconds */);
-        urlConnection.setConnectTimeout(15000 /* milliseconds */);
-
-        urlConnection.setDoOutput(true);
-
-        urlConnection.connect();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-        char[] buffer = new char[1024];
-
-        String jsonString = new String();
-
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line + "\n");
-        }
-        br.close();
-
-        jsonString = sb.toString();
-
-        System.out.println("JSON: " + jsonString);
-
-        return new JSONObject(jsonString);
+        return objectApi.CreateLog(ImageUrl);
     }
 }
