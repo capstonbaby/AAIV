@@ -5,15 +5,23 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import com.cloudinary.Cloudinary;
@@ -35,6 +43,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import id.zelory.compressor.Compressor;
 import me.nereo.multi_image_selector.MultiImageSelector;
 import retrofit2.Call;
@@ -79,16 +89,27 @@ public class AddPersonActivity extends AppCompatActivity {
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
     private int gridItemPosition;
 
+    @BindView(R.id.ivAdd)
+    ImageView ivAdd;
+    @BindView(R.id.drawer)
+    DrawerLayout drawer;
+    @BindView(R.id.nvNavigation)
+    NavigationView nvNavigation;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_person);
+        ButterKnife.bind(this);
         context = getApplicationContext();
 
         txtPersonName = (TextInputLayout) findViewById(R.id.input_layout_name);
         txtPersonDes = (TextInputLayout) findViewById(R.id.input_layout_des);
         bt_cretePerson = (Button) findViewById(R.id.bt_create);
-        fab_add_image = (FloatingActionButton) findViewById(R.id.fab_add_image);
+//        fab_add_image = (FloatingActionButton) findViewById(R.id.fab_add_image);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         bt_train = (Button) findViewById(R.id.bt_train);
 
@@ -172,7 +193,7 @@ public class AddPersonActivity extends AppCompatActivity {
             }
         }
 
-        fab_add_image.setOnClickListener(new View.OnClickListener() {
+        ivAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 MultiImageSelector.create(AddPersonActivity.this)
@@ -182,6 +203,16 @@ public class AddPersonActivity extends AppCompatActivity {
                         .start(AddPersonActivity.this, REQUEST_IMAGE);
             }
         });
+//        fab_add_image.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                MultiImageSelector.create(AddPersonActivity.this)
+//                        .showCamera(true)
+//                        .count(IMAGE_AMOUNT)
+//                        .multi()
+//                        .start(AddPersonActivity.this, REQUEST_IMAGE);
+//            }
+//        });
 
         bt_train.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -189,6 +220,45 @@ public class AddPersonActivity extends AppCompatActivity {
                 new TrainPersonGroup().execute(PersonGroupId);
             }
         });
+        initDrawer();
+    }
+
+    private void initDrawer() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        nvNavigation.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                selectDrawerItem(item);
+                return true;
+            }
+        });
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.open, R.string.close);
+        drawer.addDrawerListener(actionBarDrawerToggle);
+    }
+
+    private void selectDrawerItem(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.setting:
+
+                break;
+            case R.id.logs:
+                break;
+            case R.id.quota:
+                break;
+            case R.id.sign_out:
+                break;
+        }
+        drawer.closeDrawers();
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        actionBarDrawerToggle.syncState();
     }
 
     @Override
@@ -507,5 +577,13 @@ public class AddPersonActivity extends AppCompatActivity {
                 new AddPersonFace(PersonGroupId, url).execute(UUID.fromString(personId));
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent i = new Intent(AddPersonActivity.this, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
     }
 }

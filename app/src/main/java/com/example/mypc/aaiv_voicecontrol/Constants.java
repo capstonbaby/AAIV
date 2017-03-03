@@ -25,25 +25,25 @@ public class Constants {
     public static final String Object_API = "api/object/";
 
     //Command
-    private static String SHOOTING_COMMAND;
-    private static String DETECT_PERSON_COMMAND;
-    private static String DETECT_OBJECT_COMMAND;
-    private static String DETECT_VIEW_COMMAND;
-    private static String REPEAT_RESULT_COMMAND;
-    private static String NEW_PERSON_COMMAND;
-    private static String ACCEPT_COMMAND;
-    private static String DENY_COMMAND;
-    private static String SHOW_LOG_COMMAND;
+//    private static String SHOOTING_COMMAND;
+//    private static String DETECT_PERSON_COMMAND;
+//    private static String DETECT_OBJECT_COMMAND;
+//    private static String DETECT_VIEW_COMMAND;
+//    private static String REPEAT_RESULT_COMMAND;
+//    private static String NEW_PERSON_COMMAND;
+//    private static String ACCEPT_COMMAND;
+//    private static String DENY_COMMAND;
+//    private static String SHOW_LOG_COMMAND;
 
-//    private static String SHOOTING_COMMAND = "Chụp";
-//    private static String DETECT_PERSON_COMMAND = "Ai đó";
-//    private static String DETECT_OBJECT_COMMAND = "Cái gì đó";
-//    private static String DETECT_VIEW_COMMAND = "Cảnh gì đó";
-//    private static String REPEAT_RESULT_COMMAND = "lặp lại";
-//    private static String NEW_PERSON_COMMAND = "thêm mới";
-//    private static String ACCEPT_COMMAND = "Đồng ý";
-//    private static String DENY_COMMAND = "Hủy";
-//    private static String SHOW_LOG_COMMAND = "lịch sử";
+    private static String SHOOTING_COMMAND = "Chụp";
+    private static String DETECT_PERSON_COMMAND = "Ai đó";
+    private static String DETECT_OBJECT_COMMAND = "Cái gì đó";
+    private static String DETECT_VIEW_COMMAND = "Cảnh gì đó";
+    private static String REPEAT_RESULT_COMMAND = "lặp lại";
+    private static String NEW_PERSON_COMMAND = "thêm mới";
+    private static String ACCEPT_COMMAND = "Đồng ý";
+    private static String DENY_COMMAND = "Hủy";
+    private static String SHOW_LOG_COMMAND = "lịch sử";
 
 
     public static void setApiHost(String hostApi) {

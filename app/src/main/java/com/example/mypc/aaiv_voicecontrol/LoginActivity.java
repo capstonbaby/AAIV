@@ -39,5 +39,11 @@ public class LoginActivity extends AppCompatActivity
                 startActivity(it);
             }
         });
+        lin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(MainActivity.newInstance(LoginActivity.this));
+            }
+        });
     }
 }

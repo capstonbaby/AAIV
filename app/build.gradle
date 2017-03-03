@@ -14,7 +14,12 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            buildConfigField("String", "host", "\"kerokuapp..:\"")
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug{
+            debuggable true
+            buildConfigField("String", "host", "\"192.168.80:\"")
         }
     }
 }
@@ -41,4 +46,7 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:25.1.0'
     compile 'com.microsoft.projectoxford:face:1.2.1'
     compile 'com.theartofdev.edmodo:android-image-cropper:2.3.+'
+    compile 'com.jakewharton:butterknife:8.4.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
+    compile 'de.hdodenhof:circleimageview:2.1.0'
 }

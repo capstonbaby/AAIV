@@ -31,4 +31,8 @@
     <string name="forecast_caption">To try recognition of a weather forecast like \"sunny spells on Wednesday\".</string>
     <string name="phone_caption">To try phonetic recognition say anything.</string>
     <string name="train_button">Train</string>
+
+
+    <string name="open">Open</string>
+    <string name="close">Close</string>
 </resources>

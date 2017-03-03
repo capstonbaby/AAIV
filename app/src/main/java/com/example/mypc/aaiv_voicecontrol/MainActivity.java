@@ -1,6 +1,7 @@
 package com.example.mypc.aaiv_voicecontrol;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,10 +9,16 @@ import android.os.HandlerThread;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -38,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -65,6 +74,11 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE
 
 public class MainActivity extends AppCompatActivity {
 
+    public static Intent newInstance(Context context) {
+        Intent i = new Intent(context, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        return i;
+    }
 
     private MainServices mainServices = new MainServices();
     Map uploadResult = null;
@@ -101,13 +115,22 @@ public class MainActivity extends AppCompatActivity {
 
     private TextToSpeech mTextToSpeech;
 
+    @BindView(R.id.drawer)
+    DrawerLayout drawer;
+    @BindView(R.id.nvNavigation)
+    NavigationView nvNavigation;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         startBackgroundThread();
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+        initDrawer();
         SetUpText2Speech();
 
         iv_preview = (ImageView) findViewById(R.id.iv_preview);
@@ -130,6 +153,43 @@ public class MainActivity extends AppCompatActivity {
                 startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
             }
         });
+    }
+
+    private void initDrawer() {
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        nvNavigation.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                selectDrawerItem(item);
+                return true;
+            }
+        });
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.open, R.string.close);
+        drawer.addDrawerListener(actionBarDrawerToggle);
+    }
+
+    private void selectDrawerItem(MenuItem item) {
+        int id = item.getItemId();
+        switch (id){
+            case R.id.setting:
+
+                break;
+            case R.id.logs:
+                break;
+            case R.id.quota:
+                break;
+            case R.id.sign_out:
+                break;
+        }
+        drawer.closeDrawers();
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        actionBarDrawerToggle.syncState();
     }
 
     @Override
@@ -299,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
 
                             break;
                         }
-                        case STREAM_DETECT:{
+                        case STREAM_DETECT: {
                             Intent intent = new Intent(this, CloudiaryTest.class);
                             startActivity(intent);
                             break;

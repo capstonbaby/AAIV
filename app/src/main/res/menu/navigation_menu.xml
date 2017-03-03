@@ -6,11 +6,14 @@
         android:id="@+id/menu_personal"
         android:checkableBehavior="single">
         <item
-            android:id="@+id/your_profile"
-            android:title="Your Profile" />
+            android:id="@+id/setting"
+            android:title="Setting" />
         <item
-            android:id="@+id/borrow_list"
-            android:title="Borrow List" />
+            android:id="@+id/logs"
+            android:title="Logs" />
+        <item
+            android:id="@+id/quota"
+            android:title="Quota" />
     </group>
     <group
         android:id="@+id/menu_navigation"
