@@ -9,7 +9,15 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+<<<<<<< HEAD
       <root url="jar://$USER_HOME$/Android/Sdk/extras/android/m2repository/com/android/support/support-fragment/25.1.0/support-fragment-25.1.0-sources.jar!/" />
+=======
+<<<<<<< HEAD
+      <root url="jar://D:/androidSdk/extras/android/m2repository/com/android/support/support-fragment/25.1.0/support-fragment-25.1.0-sources.jar!/" />
+=======
+>>>>>>> a582660acb79472eb33a5393a092e9094839668f
+      <root url="jar://$USER_HOME$/AppData/Local/Android/sdk/extras/android/m2repository/com/android/support/support-fragment/25.1.0/support-fragment-25.1.0-sources.jar!/" />
+>>>>>>> c52873755b9794487f05e64ba0758069f389f236
     </SOURCES>
   </library>
 </component>
