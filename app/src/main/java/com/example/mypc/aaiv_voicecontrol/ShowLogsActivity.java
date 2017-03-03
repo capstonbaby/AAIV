@@ -4,11 +4,18 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -23,6 +30,8 @@ import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -41,11 +50,20 @@ public class ShowLogsActivity extends AppCompatActivity {
     private LogAdapter mLogAdapter;
     private TextView TvNoLog;
 
+    @BindView(R.id.drawer)
+    DrawerLayout drawer;
+    @BindView(R.id.nvNavigation)
+    NavigationView nvNavigation;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_logs);
-
+        ButterKnife.bind(this);
+        initDrawer();
         context = getApplicationContext();
 
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_logs);
@@ -58,10 +76,10 @@ public class ShowLogsActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<LogResponse>> call, Response<List<LogResponse>> response) {
                 if (response.isSuccessful()) {
-                    if(response.body().size() > 0){
+                    if (response.body().size() > 0) {
                         mProgressBar.setVisibility(View.INVISIBLE);
                         logList = response.body();
-                        if(logList.size() >= 1){
+                        if (logList.size() >= 1) {
                             mLogAdapter = new LogAdapter(logList);
                             RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
                             mRecyclerView.setLayoutManager(layoutManager);
@@ -110,7 +128,7 @@ public class ShowLogsActivity extends AppCompatActivity {
 
                             mRecyclerView.setAdapter(mLogAdapter);
                         }
-                    }else{
+                    } else {
                         mProgressBar.setVisibility(View.INVISIBLE);
                         TvNoLog.setVisibility(View.VISIBLE);
                     }
@@ -123,5 +141,41 @@ public class ShowLogsActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void initDrawer() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        nvNavigation.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                selectDrawerItem(item);
+                return true;
+            }
+        });
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.open, R.string.close);
+        drawer.addDrawerListener(actionBarDrawerToggle);
+    }
+    private void selectDrawerItem(MenuItem item) {
+        int id = item.getItemId();
+        switch (id){
+            case R.id.setting:
+
+                break;
+            case R.id.logs:
+                break;
+            case R.id.quota:
+                break;
+            case R.id.sign_out:
+                break;
+        }
+        drawer.closeDrawers();
+    }
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        actionBarDrawerToggle.syncState();
     }
 }

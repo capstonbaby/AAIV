@@ -4,10 +4,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -23,6 +31,9 @@ import com.microsoft.projectoxford.face.rest.ClientException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
@@ -43,36 +54,83 @@ public class UpdatePersonActivity extends AppCompatActivity {
     private Button mBtAddNewPerson;
     private LogResponse log;
 
+    @BindView(R.id.fabAdd)
+    FloatingActionButton fabAdd;
+    @BindView(R.id.drawer)
+    DrawerLayout drawer;
+    @BindView(R.id.nvNavigation)
+    NavigationView nvNavigation;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update_person);
-
+        ButterKnife.bind(this);
         context = getApplicationContext();
 
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_persons);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_persons);
-        mBtAddNewPerson = (Button) findViewById(R.id.bt_new_person);
+//        mBtAddNewPerson = (Button) findViewById(R.id.bt_new_person);
 
         mProgressBar.setVisibility(View.VISIBLE);
         new ListPerson().execute(PersonGroupId);
 
         Bundle bundle = getIntent().getExtras();
-        if(bundle != null){
+        if (bundle != null) {
             log = (LogResponse) bundle.get("logfile");
         }
 
-         mBtAddNewPerson.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
-                 Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
-                 intent.putExtra("logFile", log);
-                 intent.putExtra("mode", ADD_NEW_PERSON_MODE);
-                 startActivity(intent);
-             }
-         });
+        fabAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
+                intent.putExtra("logFile", log);
+                intent.putExtra("mode", ADD_NEW_PERSON_MODE);
+                startActivity(intent);
+            }
+        });
+        initNavigation();
     }
 
+    private void initNavigation() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        nvNavigation.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                selectDrawerItem(item);
+                return true;
+            }
+        });
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.open, R.string.close);
+        drawer.addDrawerListener(actionBarDrawerToggle);
+    }
+
+    private void selectDrawerItem(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.setting:
+
+                break;
+            case R.id.logs:
+                break;
+            case R.id.quota:
+                break;
+            case R.id.sign_out:
+                break;
+        }
+        drawer.closeDrawers();
+    }
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        actionBarDrawerToggle.syncState();
+    }
     public class ListPerson extends AsyncTask<String, Void, Person[]> {
 
         @Override
@@ -105,7 +163,7 @@ public class UpdatePersonActivity extends AppCompatActivity {
                 mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
                     @Override
                     public void onClick(View view, int position) {
-                        if(log != null){
+                        if (log != null) {
                             Person person = mPersonList.get(position);
                             Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
                             intent.putExtra("logFile", log);
