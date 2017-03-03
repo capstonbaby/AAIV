@@ -155,14 +155,8 @@ public class MainServices {
             Response<ResponseBody> response = objectService.DetectObject(url).execute();
 
             String jsonStr = response.body().string();
-            jsonClarifai = new JSONObject(jsonStr);
-
-            outputPart = (JSONObject) jsonClarifai.getJSONArray("outputs").get(0);
-            firstConcept = (JSONObject) outputPart.getJSONObject("data").getJSONArray("concepts").get(0);
-            valueStr = firstConcept.getString("value");
-            if(Double.parseDouble(valueStr) > 0.7){
-                returnValue =  firstConcept.getString("id");
-            }else{
+            Log.i("jsonStr", jsonStr);
+            if(jsonStr.trim().equals("error")){
                 objectService.CreateLog(url).enqueue(new Callback<MessageResponse>() {
                     @Override
                     public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
@@ -176,6 +170,8 @@ public class MainServices {
                     }
                 });
                 returnValue = "Không xác định được vật thể";
+            }else{
+                returnValue = jsonStr;
             }
         } catch (Exception e) {
             e.printStackTrace();
