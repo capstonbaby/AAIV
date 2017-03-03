@@ -25,25 +25,16 @@ public class Constants {
     public static final String Object_API = "api/object/";
 
     //Command
-    private static String SHOOTING_COMMAND;
-    private static String DETECT_PERSON_COMMAND;
-    private static String DETECT_OBJECT_COMMAND;
-    private static String DETECT_VIEW_COMMAND;
-    private static String REPEAT_RESULT_COMMAND;
-    private static String NEW_PERSON_COMMAND;
-    private static String ACCEPT_COMMAND;
-    private static String DENY_COMMAND;
-    private static String SHOW_LOG_COMMAND;
+    public static String SHOOTING_COMMAND;
+    public static String DETECT_PERSON_COMMAND = "người";
+    public static String DETECT_OBJECT_COMMAND = "vật";
+    public static String DETECT_VIEW_COMMAND = "miêu tả";
+    public static String REPEAT_RESULT_COMMAND = "nhắc lại";
+    public static String NEW_PERSON_COMMAND= "thêm người";
+    public static String ACCEPT_COMMAND = "có";
+    public static String DENY_COMMAND = "không";
+    public static String SHOW_LOG_COMMAND = "lịch sử";
 
-//    private static String SHOOTING_COMMAND = "Chụp";
-//    private static String DETECT_PERSON_COMMAND = "Ai đó";
-//    private static String DETECT_OBJECT_COMMAND = "Cái gì đó";
-//    private static String DETECT_VIEW_COMMAND = "Cảnh gì đó";
-//    private static String REPEAT_RESULT_COMMAND = "lặp lại";
-//    private static String NEW_PERSON_COMMAND = "thêm mới";
-//    private static String ACCEPT_COMMAND = "Đồng ý";
-//    private static String DENY_COMMAND = "Hủy";
-//    private static String SHOW_LOG_COMMAND = "lịch sử";
 
 
     public static void setApiHost(String hostApi) {
@@ -159,7 +150,7 @@ public class Constants {
     public static final String NEGATIVE = "no";
     public static final String CREATE_LOG_FILE = "save person";
     public static final String SHOW_LOGS = "history";
-    public static final String STREAM_DETECT = "stream";
+    public static final String STREAM_DETECT = "quay";
 
     public static final int SPEECH_PERSON_NAME_CODE = 2;
     public static final String SPEECH_LANGUAGE_ENG = "en-US";
@@ -175,5 +166,5 @@ public class Constants {
     public static final String ADD_NEW_PERSON_MODE = "new";
     public static final String UPDATE_PERSON_MODE = "update";
 
-    public static final String PersonGroupId = "friend";
+    public static final String PersonGroupId = "capstone";
 }

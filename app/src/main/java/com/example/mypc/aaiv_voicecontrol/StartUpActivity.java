@@ -101,7 +101,6 @@ public class StartUpActivity extends AppCompatActivity {
         button_retry.setOnClickListener(new View.OnClickListener() {
                                             @Override
                                             public void onClick(View v) {
-
                                                 switch (processStep) {
                                                     case 1: {
                                                         getShootingCommand();
@@ -253,8 +252,20 @@ public class StartUpActivity extends AppCompatActivity {
         hideTextView(tv_temp);
         tv_temp = (TextView) findViewById(R.id.tv_contentConfirmation);
         hideTextView(tv_temp);
-
+        tv_temp = (TextView) findViewById(R.id.tv_setupTitle);
+        hideTextView(tv_temp);
+        tv_temp = (TextView) findViewById(R.id.tv_contentTitle);
+        hideTextView(tv_temp);
         hideButton();
+
+        Button btn_save = (Button) findViewById(R.id.btn_save);
+        btn_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(StartUpActivity.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
 
     }
 
@@ -341,7 +352,12 @@ public class StartUpActivity extends AppCompatActivity {
                         break;
                     }
                 }
+                default: {
+                    break;
+                }
             }
+        } else {
+            Speak("Xin hãy nói lại", "repeat");
         }
     }
 
@@ -493,6 +509,10 @@ public class StartUpActivity extends AppCompatActivity {
 
                                         }
                                     });
+                                    break;
+                                }
+                                case "repeat": {
+                                    startSpeechToText(requestString, requestLanguage, processStep);
                                     break;
                                 }
                                 default:

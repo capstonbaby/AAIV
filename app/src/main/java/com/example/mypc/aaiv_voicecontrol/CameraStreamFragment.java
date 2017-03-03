@@ -496,12 +496,21 @@ public class CameraStreamFragment extends Fragment
 
     @Override
     public void onPause() {
-        closeCamera();
-        stopBackgroundThread();
         if (timer != null) {
             timer.cancel();
         }
+        closeCamera();
+        stopBackgroundThread();
+
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        if(timer != null){
+            timer.cancel();
+        }
+        super.onStop();
     }
 
     private void requestCameraPermission() {
@@ -936,7 +945,7 @@ public class CameraStreamFragment extends Fragment
             public void run() {
                 takePicture();
             }
-        }, 0, 5000);
+        }, 0, 6000);
 
         //takePicture();
     }
