@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -29,7 +28,6 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,7 +48,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.mypc.aaiv_voicecontrol.Helper.ImageHelper;
+import com.bumptech.glide.Glide;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.Face;
@@ -58,12 +58,9 @@ import com.microsoft.projectoxford.face.contract.IdentifyResult;
 import com.microsoft.projectoxford.face.contract.Person;
 import com.microsoft.projectoxford.face.rest.ClientException;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -73,12 +70,17 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import id.zelory.compressor.Compressor;
+
 import static android.R.string.cancel;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -86,6 +88,11 @@ import static android.R.string.cancel;
 public class CameraStreamFragment extends Fragment
         implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback {
 
+
+    private static final Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+            "cloud_name", "debwqzo2g",
+            "api_key", "852288139213848",
+            "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
 
     private String capture_mode;
     SpeechServices p = new SpeechServices();
@@ -489,12 +496,21 @@ public class CameraStreamFragment extends Fragment
 
     @Override
     public void onPause() {
-        closeCamera();
-        stopBackgroundThread();
         if (timer != null) {
             timer.cancel();
         }
+        closeCamera();
+        stopBackgroundThread();
+
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        if(timer != null){
+            timer.cancel();
+        }
+        super.onStop();
     }
 
     private void requestCameraPermission() {
@@ -744,7 +760,7 @@ public class CameraStreamFragment extends Fragment
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                                 // Flash is automatically enabled when necessary.
-                                setAutoFlash(mPreviewRequestBuilder);
+                                //setAutoFlash(mPreviewRequestBuilder);
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
@@ -860,7 +876,7 @@ public class CameraStreamFragment extends Fragment
             // Use the same AE and AF modes as the preview.
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-            setAutoFlash(captureBuilder);
+            //setAutoFlash(captureBuilder);
 
             // Orientation
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -909,7 +925,7 @@ public class CameraStreamFragment extends Fragment
             // Reset the auto-focus trigger
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
-            setAutoFlash(mPreviewRequestBuilder);
+            //setAutoFlash(mPreviewRequestBuilder);
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
                     mBackgroundHandler);
             // After this, the camera will go back to the normal state of preview.
@@ -923,15 +939,15 @@ public class CameraStreamFragment extends Fragment
 
     @Override
     public void onClick(View view) {
-//        timer = new Timer();
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                takePicture();
-//            }
-//        }, 0, 5000);
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                takePicture();
+            }
+        }, 0, 6000);
 
-        takePicture();
+        //takePicture();
     }
 
     private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
@@ -969,23 +985,17 @@ public class CameraStreamFragment extends Fragment
             try {
                 output = new FileOutputStream(mFile);
                 output.write(bytes);
-                showToast("Saved: " + mFile);
+                Log.d("Saved: ", mFile.getAbsolutePath());
                 Log.d(TAG, mFile.toString());
 
-                final Bitmap bitmap = ImageHelper.loadSizeLimitedBitmapFromUri(Uri.fromFile(mFile),
-                        CloudiaryTest.getContext().getContentResolver());
-
-                //final File compressedImage = Compressor.getDefault(CloudiaryTest.getContext()).compressToFile(mFile);
-
-                if (bitmap != null) {
-                    mPreviewImageView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mPreviewImageView.setImageBitmap(bitmap);
-                        }
-                    });
-                }
-                detect(bitmap);
+                final File compressedImage = Compressor.getDefault(CloudiaryTest.getContext()).compressToFile(mFile);
+                mPreviewImageView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Glide.with(getContext()).load(compressedImage.getAbsolutePath()).into(mPreviewImageView);
+                    }
+                });
+                new Uploader(compressedImage).execute();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -1086,13 +1096,14 @@ public class CameraStreamFragment extends Fragment
         }
     }
 
-    private class FaceDetection extends AsyncTask<InputStream, String, Face[]> {
+    private class FaceDetection extends AsyncTask<String, String, Face[]> {
 
         @Override
-        protected Face[] doInBackground(InputStream... params) {
+        protected Face[] doInBackground(String... params) {
             FaceServiceClient client = Constants.getmFaceServiceClient();
-
+            Log.d("identify", "Detecting");
             try {
+
                 return client.detect(
                         params[0],
                         true,
@@ -1116,7 +1127,7 @@ public class CameraStreamFragment extends Fragment
                     faceids.add(face.faceId);
                 }
 
-                new FaceIdentify("friend").execute(faceids.toArray(new UUID[faceids.size()]));
+                new FaceIdentify(PersonGroupId).execute(faceids.toArray(new UUID[faceids.size()]));
             } else {
                 mTvResult.post(new Runnable() {
                     @Override
@@ -1124,7 +1135,7 @@ public class CameraStreamFragment extends Fragment
                         mTvResult.setText("");
                     }
                 });
-                takePicture();
+                Log.d("identify", "Detect no Face");
             }
         }
     }
@@ -1139,6 +1150,8 @@ public class CameraStreamFragment extends Fragment
 
         @Override
         protected IdentifyResult[] doInBackground(UUID... params) {
+            Log.d("identify", "Identifying");
+
             FaceServiceClient client = Constants.getmFaceServiceClient();
             try {
                 return client.identity(
@@ -1169,17 +1182,18 @@ public class CameraStreamFragment extends Fragment
                             }
                         });
 
-                        takePicture();
+                        //takePicture();
                     }
                 }
             } else {
+                Log.d("identify", "Identify no result");
                 mTvResult.post(new Runnable() {
                     @Override
                     public void run() {
                         mTvResult.setText("");
                     }
                 });
-                takePicture();
+                //takePicture();
             }
         }
     }
@@ -1188,9 +1202,11 @@ public class CameraStreamFragment extends Fragment
 
         @Override
         protected Person doInBackground(UUID... params) {
+            Log.d("identify", "Person");
+
             FaceServiceClient client = Constants.getmFaceServiceClient();
             try {
-                return client.getPerson("friend", params[0]);
+                return client.getPerson(PersonGroupId, params[0]);
             } catch (ClientException e) {
                 e.printStackTrace();
                 return null;
@@ -1211,27 +1227,45 @@ public class CameraStreamFragment extends Fragment
                     }
                 });
                 Speak(person.name);
-                takePicture();
-            }else {
+                //takePicture();
+            } else {
+                Log.d("identify", "No Person found");
                 mTvResult.post(new Runnable() {
                     @Override
                     public void run() {
                         mTvResult.setText("");
                     }
                 });
-                takePicture();
+                //takePicture();
             }
         }
     }
 
-    private void detect(Bitmap bitmap) {
-        // Put the image into an input stream for detection.
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
+    public class Uploader extends AsyncTask<Void, Void, Map> {
 
-        // Start a background task to detect faces in the image.
-        new FaceDetection().execute(inputStream);
+        private File compressedFile;
+
+        public Uploader(File compressedFile) {
+            this.compressedFile = compressedFile;
+        }
+
+        @Override
+        protected Map doInBackground(Void... params) {
+            try {
+                return cloudinary.uploader().upload(compressedFile, ObjectUtils.emptyMap());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Map map) {
+            if (map != null) {
+                String url = (String) map.get("url");
+                new FaceDetection().execute(url);
+            }
+        }
     }
 
     private void SetUpText2Speech() {

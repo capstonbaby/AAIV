@@ -19,4 +19,13 @@
         android:visibility="invisible"
         android:id="@+id/pb_show_logs"/>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tv_no_log"
+        android:layout_centerInParent="true"
+        android:text="No log found"
+        android:gravity="center"
+        android:visibility="invisible"/>
+
 </RelativeLayout>

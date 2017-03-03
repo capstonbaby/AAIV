@@ -22,10 +22,6 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.mypc.aaiv_voicecontrol.Speech.SpeechAPIService;
-import com.example.mypc.aaiv_voicecontrol.Speech.SpeechApiUtils;
-import com.example.mypc.aaiv_voicecontrol.Translation.TranslationAPIService;
-import com.example.mypc.aaiv_voicecontrol.Translation.TranslationApiUtils;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.person_model.IdentifyResult;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
@@ -42,23 +38,27 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_PERSON_VIEW;
-import static com.example.mypc.aaiv_voicecontrol.Constants.AFFIRMATIVE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.ACCEPT_COMMAND;
+import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.CREATE_LOG_FILE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.DENY_COMMAND;
+import static com.example.mypc.aaiv_voicecontrol.Constants.DETECT_OBJECT_COMMAND;
+import static com.example.mypc.aaiv_voicecontrol.Constants.DETECT_PERSON_COMMAND;
+import static com.example.mypc.aaiv_voicecontrol.Constants.DETECT_VIEW_COMMAND;
 import static com.example.mypc.aaiv_voicecontrol.Constants.FACE_RECOGNITION_MODE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.NEGATIVE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.NEW_PERSON_COMMAND;
 import static com.example.mypc.aaiv_voicecontrol.Constants.NO_PERSON_DETECTED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.OBJECT_RECOGNITION_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
-import static com.example.mypc.aaiv_voicecontrol.Constants.REPEAT;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SHOW_LOGS;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_ENG;
+import static com.example.mypc.aaiv_voicecontrol.Constants.REPEAT_RESULT_COMMAND;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SHOW_LOG_COMMAND;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_VIE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_CONFIRMATION;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_PERSON_NAME_CODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_RECOGNITION_CODE;
+import static com.example.mypc.aaiv_voicecontrol.Constants.STREAM_DETECT;
 import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE;
 
 public class MainActivity extends AppCompatActivity {
@@ -71,13 +71,6 @@ public class MainActivity extends AppCompatActivity {
             "api_key", "852288139213848",
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
 
-    private static final String key = "AIzaSyDOi-0A_dUQ0CDIQU_ku2SiYpdZxwP6BtY";
-    private static final String source = "en";
-    private static final String target = "vi";
-    private TranslationAPIService mTranslationAPIService = TranslationApiUtils.getAPIService();
-    private static final SpeechAPIService mAPIService = SpeechApiUtils.getAPIService();
-
-    private TextView txtOutput;
     private FloatingActionButton fab;
     private ImageView iv_preview;
     private ImageButton mVoiceButton;
@@ -125,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
         mVoiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
+                startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_VIE);
             }
         });
     }
@@ -249,56 +242,39 @@ public class MainActivity extends AppCompatActivity {
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
 
                     String text = results.get(0).toLowerCase();
-                    switch (text) {
-                        case FACE_RECOGNITION_MODE: {
-                            Intent intent = new Intent(this, CameraActivity_2.class);
-                            intent.putExtra("capture_mode", FACE_RECOGNITION_MODE);
-                            startActivity(intent);
-                            break;
+                    if (text.equals(DETECT_PERSON_COMMAND)) {
+                        Intent intent = new Intent(this, CameraActivity_2.class);
+                        intent.putExtra("capture_mode", FACE_RECOGNITION_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(DETECT_OBJECT_COMMAND)) {
+                        Intent intent = new Intent(this, CameraActivity_2.class);
+                        intent.putExtra("capture_mode", OBJECT_RECOGNITION_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(DETECT_VIEW_COMMAND)) {
+                        Intent intent = new Intent(this, CameraActivity_2.class);
+                        intent.putExtra("capture_mode", VIEW_RECOGNITION_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(REPEAT_RESULT_COMMAND)) {
+                        if (result != "") {
+                            mSpeechServices.sendGet(result, mTextToSpeech);
                         }
-                        case OBJECT_RECOGNITION_MODE: {
-                            Intent intent = new Intent(this, CameraActivity_2.class);
-                            intent.putExtra("capture_mode", OBJECT_RECOGNITION_MODE);
-                            startActivity(intent);
-                            break;
-                        }
-                        case VIEW_RECOGNITION_MODE: {
-                            Intent intent = new Intent(this, CameraActivity_2.class);
-                            intent.putExtra("capture_mode", VIEW_RECOGNITION_MODE);
-                            startActivity(intent);
-                            break;
-                        }
-                        case REPEAT: {
-                            if (result != "") {
-                                mSpeechServices.sendGet(result, mTextToSpeech);
-                            }
-                            break;
-                        }
-                        case ADD_PERSON_VIEW: {
-                            Intent intent = new Intent(this, AddPersonActivity.class);
-                            startActivity(intent);
-                            break;
-                        }
-                        case AFFIRMATIVE: {
-                            startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
-                            break;
-                        }
-                        case CREATE_LOG_FILE: {
-                            startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
-                            break;
-                        }
-                        case NEGATIVE: {
-                            break;
-                        }
-                        case SHOW_LOGS: {
-                            Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
-                            startActivity(intent);
-
-                            break;
-                        }
-                        default:
-                            Toast.makeText(this, "Không hỗ trợ: " + text, Toast.LENGTH_SHORT).show();
-                            break;
+                    } else if (text.equals(NEW_PERSON_COMMAND)) {
+                        Intent intent = new Intent(this, AddPersonActivity.class);
+                        intent.putExtra("mode", ADD_NEW_PERSON_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(ACCEPT_COMMAND)) {
+                        startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
+                    } else if (text.equals(CREATE_LOG_FILE)) {
+                        startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
+                    } else if (text.equals(DENY_COMMAND)) {
+                    } else if (text.equals(SHOW_LOG_COMMAND)) {
+                        Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
+                        startActivity(intent);
+                    } else if (text.equals(STREAM_DETECT)) {
+                        Intent intent = new Intent(this, CloudiaryTest.class);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(this, "Không hỗ trợ: " + text, Toast.LENGTH_SHORT).show();
                     }
                 }
                 break;
@@ -369,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onDone(String utteranceId) {
                             switch (utteranceId) {
                                 case SPEECH_ONDONE_CONFIRMATION: {
-                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
+                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_VIE);
                                     break;
                                 }
                                 case SPEECH_ONDONE_NOREQUEST: {

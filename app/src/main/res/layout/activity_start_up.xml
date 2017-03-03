@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_start_up"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.mypc.aaiv_voicecontrol.StartUpActivity">
+
+    <TextView
+        android:id="@+id/tv_setupTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CÀI ĐẶT KHẨU LỆNH"
+        android:textSize="32dp"
+        android:textStyle="bold"
+        android:layout_marginTop="70dp"
+        android:layout_centerHorizontal="true"
+        android:visibility="invisible"/>
+
+    <TextView
+
+        android:id="@+id/tv_contentTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="30dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="230dp"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/tv_confirmation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="XÁC NHẬN KHẨU LỆNH"
+        android:textSize="32dp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="70dp"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/tv_contentConfirmation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CHỤP HÌNH"
+        android:textSize="28dp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="230dp"
+        android:visibility="invisible"/>
+
+
+        <Button
+            android:id="@+id/btn_retry"
+            android:layout_width="150dp"
+            android:layout_height="60dp"
+            android:text="THỬ LẠI"
+            android:textSize="25dp"
+            android:layout_marginTop="450dp"
+            android:layout_marginLeft="20dp"
+            android:visibility="invisible"/>
+
+        <Button
+            android:id="@+id/btn_confirm"
+            android:layout_width="150dp"
+            android:layout_height="60dp"
+            android:text="XÁC NHẬN"
+            android:textSize="25dp"
+            android:layout_marginTop="450dp"
+            android:layout_marginLeft="180dp"
+            android:visibility="invisible"/>
+
+    <Button
+        android:id="@+id/btn_Start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start"
+        android:textSize="40dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"/>
+    
+    <TableLayout
+        android:id="@+id/tb_result"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:stretchColumns="*"
+        android:visibility="invisible">
+
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh chụp ảnh: "/>
+            <TextView
+                android:id="@+id/tv_shootingCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh nhận diện người: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_detectPersonCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh nhận diện vật thể: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_detectObjectCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh nhận diện khung cảnh: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_detectViewCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh lặp lại kết quả: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_repeatResultCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh thêm người mới: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_newPersonCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh xác nhận: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_acceptCommand"/>
+        </TableRow
+            >
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh hủy: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_denyCommand"/>
+        </TableRow>
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <TextView
+                android:textStyle="bold"
+                android:textSize="17dp"
+                android:text="Khẩu lệnh xem lịch sử: "/>
+            <TextView
+                android:textSize="17dp"
+                android:id="@+id/tv_showLogCommand"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_weight="1"
+            android:gravity="center">
+            <Button
+                android:id="@+id/btn_save"
+                android:text="Bắt đầu"
+                android:textStyle="bold"/>
+
+        </TableRow>
+
+
+    </TableLayout>
+
+
+</RelativeLayout>

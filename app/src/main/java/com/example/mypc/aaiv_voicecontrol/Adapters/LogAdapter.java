@@ -1,4 +1,4 @@
-package com.example.mypc.aaiv_voicecontrol;
+package com.example.mypc.aaiv_voicecontrol.Adapters;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -8,9 +8,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.example.mypc.aaiv_voicecontrol.R;
+import com.example.mypc.aaiv_voicecontrol.ShowLogsActivity;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
-
-import org.w3c.dom.Text;
 
 import java.util.List;
 

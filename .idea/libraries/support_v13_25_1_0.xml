@@ -1,13 +1,16 @@
 <component name="libraryTable">
   <library name="support-v13-25.1.0">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.android.support/support-v13/25.1.0/res" />
       <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.android.support/support-v13/25.1.0/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.android.support/support-v13/25.1.0/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$USER_HOME$/AppData/Local/Android/sdk/extras/android/m2repository/com/android/support/support-v13/25.1.0/support-v13-25.1.0-sources.jar!/" />
+<<<<<<< HEAD
       <root url="jar://D:/androidSdk/extras/android/m2repository/com/android/support/support-v13/25.1.0/support-v13-25.1.0-sources.jar!/" />
+=======
+>>>>>>> a582660acb79472eb33a5393a092e9094839668f
+      <root url="jar://$USER_HOME$/AppData/Local/Android/sdk/extras/android/m2repository/com/android/support/support-v13/25.1.0/support-v13-25.1.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

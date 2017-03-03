@@ -31,6 +31,7 @@ import retrofit2.Response;
 import static com.example.mypc.aaiv_voicecontrol.Constants.NO_PERSON_DETECTED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 
 /**
  * Created by MyPC on 02/06/2017.
@@ -74,7 +75,7 @@ public class MainServices {
 
                 faceIds = TextUtils.join(",", listFaceIds);
 
-                List<FaceIdentifyResponse> faceIdentifyResponses = service.IdentifyPerson("friend", faceIds).execute().body();
+                List<FaceIdentifyResponse> faceIdentifyResponses = service.IdentifyPerson(PersonGroupId, faceIds).execute().body();
 
                 if (faceIdentifyResponses != null) {
 
@@ -87,7 +88,7 @@ public class MainServices {
                             for (Candidate candidate :
                                     faceIdentified.candidates) {
                                 Log.d("Identify", candidate.personId);
-                                Person person = service.GetPersonById("friend", candidate.personId).execute().body();
+                                Person person = service.GetPersonById(PersonGroupId, candidate.personId).execute().body();
                                 if (person != null) {
                                     identifyResponse = person.name;
                                     identifyResult = new IdentifyResult(identifyResponse, PERSON_DETECTED_SUCCESSFULLY);
