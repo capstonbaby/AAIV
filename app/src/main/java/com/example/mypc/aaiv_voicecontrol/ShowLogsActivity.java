@@ -72,7 +72,7 @@ public class ShowLogsActivity extends AppCompatActivity {
 
         mProgressBar.setVisibility(View.VISIBLE);
         final DataService dataService = new DataService();
-        dataService.GetAllLogFromUser("36a65953-8d12-46cd-9500-fc33e9123aaf").enqueue(new Callback<List<LogResponse>>() {
+        dataService.GetAllLogFromUser(Constants.getUserId()).enqueue(new Callback<List<LogResponse>>() {
             @Override
             public void onResponse(Call<List<LogResponse>> call, Response<List<LogResponse>> response) {
                 if (response.isSuccessful()) {

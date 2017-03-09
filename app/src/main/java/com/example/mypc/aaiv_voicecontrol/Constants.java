@@ -22,6 +22,7 @@ public class Constants {
     public static final String FACE_API = "api/face/";
     public static final String EMOTION_API = "api/emotion/";
     public static final String DATA_API = "data/";
+    public static final String ACCOUNT_API = "account/";
     public static final String Object_API = "api/object/";
 
     //Command
@@ -83,6 +84,11 @@ public class Constants {
     public static String getDataAPIString() {
         return API_HOST + DATA_API;
     }
+
+    public static String getAccountAPIString() {
+        return API_HOST + ACCOUNT_API;
+    }
+
 
     public static final boolean LOGGING = false;
 
@@ -160,15 +166,15 @@ public class Constants {
     }
 
     public static final int SPEECH_RECOGNITION_CODE = 1;
-    public static final String FACE_RECOGNITION_MODE = "face";
-    public static final String OBJECT_RECOGNITION_MODE = "object";
-    public static final String VIEW_RECOGNITION_MODE = "view";
-    public static final String REPEAT = "repeat";
-    public static final String ADD_PERSON_VIEW = "new person";
-    public static final String AFFIRMATIVE = "yes";
-    public static final String NEGATIVE = "no";
-    public static final String CREATE_LOG_FILE = "save person";
-    public static final String SHOW_LOGS = "history";
+    public static final String FACE_RECOGNITION_MODE = "người";
+    public static final String OBJECT_RECOGNITION_MODE = "đồ vật";
+    public static final String VIEW_RECOGNITION_MODE = "miêu tả";
+    public static final String REPEAT = "nhắc lại";
+    public static final String ADD_PERSON_VIEW = "thêm người";
+    public static final String AFFIRMATIVE = "có";
+    public static final String NEGATIVE = "không";
+    public static final String CREATE_LOG_FILE = "lưu người này";
+    public static final String SHOW_LOGS = "lịch sử";
     public static final String STREAM_DETECT = "quay";
 
     public static final int SPEECH_PERSON_NAME_CODE = 2;
@@ -185,5 +191,31 @@ public class Constants {
     public static final String ADD_NEW_PERSON_MODE = "new";
     public static final String UPDATE_PERSON_MODE = "update";
 
-    public static final String PersonGroupId = "capstone";
+    public static String PersonGroupId = "";
+    public static String UserId = "";
+    public static String Username = "";
+
+    public static String getPersonGroupId() {
+        return PersonGroupId;
+    }
+
+    public static void setPersonGroupId(String personGroupId) {
+        PersonGroupId = personGroupId;
+    }
+
+    public static String getUserId() {
+        return UserId;
+    }
+
+    public static void setUserId(String userId) {
+        UserId = userId;
+    }
+
+    public static String getUsername() {
+        return Username;
+    }
+
+    public static void setUsername(String username) {
+        Username = username;
+    }
 }

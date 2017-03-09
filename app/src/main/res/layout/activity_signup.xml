@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/grdnt"
-    >
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/grdnt">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -27,10 +26,10 @@
                     android:src="@drawable/usrusr"
                     android:layout_gravity="center"/>
                 <EditText
-                    android:id="@+id/usrusr"
+                    android:id="@+id/email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Username"
+                    android:hint="Email"
                     android:textColorHint="#d9e5f3"
                     android:layout_marginLeft="15dp"
                     android:background="#00000000"
@@ -55,7 +54,7 @@
                     android:src="@drawable/pswd"
                     android:layout_gravity="center"/>
                 <EditText
-                    android:id="@+id/pswrdd"
+                    android:id="@+id/password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Password"
@@ -83,7 +82,7 @@
                     android:src="@drawable/pswd"
                     android:layout_gravity="center"/>
                 <EditText
-                    android:id="@+id/confirm_pswrdd"
+                    android:id="@+id/confirm_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Confirm Password"
@@ -139,5 +138,31 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:layout_marginBottom="400dp"></LinearLayout>
+        android:layout_marginBottom="400dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:id="@+id/pb_signup"
+                android:visibility="invisible"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_signup_error"
+                tools:text="something"
+                android:textSize="18sp"
+                android:textColor="#f54f46"
+                android:letterSpacing="0.1"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:visibility="invisible"/>
+        </RelativeLayout>
+
+
+    </LinearLayout>
 </RelativeLayout>

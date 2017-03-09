@@ -370,18 +370,18 @@ public class AddPersonActivity extends AppCompatActivity {
                                     public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
                                         if (response.isSuccessful()) {
                                             Log.d("deactivelog", response.body().message);
+                                            progressBar.post(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    progressBar.setVisibility(View.INVISIBLE);
+                                                }
+                                            });
                                         }
                                     }
 
                                     @Override
                                     public void onFailure(Call<MessageResponse> call, Throwable t) {
 
-                                    }
-                                });
-                                progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.INVISIBLE);
                                     }
                                 });
                             }

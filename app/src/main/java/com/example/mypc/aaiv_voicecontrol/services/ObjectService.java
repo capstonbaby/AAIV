@@ -63,6 +63,6 @@ public class ObjectService {
         Retrofit retrofit = getRetrofitObjectDetectCreateLog();
         ObjectApi objectApi = retrofit.create(ObjectApi.class);
 
-        return objectApi.CreateLog(ImageUrl);
+        return objectApi.CreateLog(ImageUrl, Constants.getUserId());
     }
 }

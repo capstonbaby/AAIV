@@ -2,8 +2,10 @@ package com.example.mypc.aaiv_voicecontrol.services;
 
 import com.example.mypc.aaiv_voicecontrol.Constants;
 import com.example.mypc.aaiv_voicecontrol.data_model.DataApi;
+import com.example.mypc.aaiv_voicecontrol.data_model.LoginResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class DataService {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
-        return dataApi.CreateLog(ImageUrl, name);
+        return dataApi.CreateLog(ImageUrl, name, Constants.getUserId());
     }
 
     public Call<List<LogResponse>> GetAllLogFromUser(String userId){
@@ -38,6 +40,20 @@ public class DataService {
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.GetAllLogFromUser(userId);
+    }
+
+    public Call<LoginResponse> Login(String email, String password){
+        Retrofit retrofit = getRetrofitAccountApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.Login(email, password);
+    }
+
+    public Call<ResponseModel> Register(String email, String password, String confirmPassword){
+        Retrofit retrofit = getRetrofitAccountApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.Register(email, password, confirmPassword);
     }
 
     public Retrofit getRetrofitDataApi() {
@@ -50,6 +66,23 @@ public class DataService {
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.getDataAPIString())
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client)
+                .build();
+
+        return retrofit;
+    }
+
+    public Retrofit getRetrofitAccountApi() {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .addInterceptor(logging)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.getAccountAPIString())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build();

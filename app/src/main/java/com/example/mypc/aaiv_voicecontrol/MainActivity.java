@@ -1,20 +1,27 @@
 package com.example.mypc.aaiv_voicecontrol;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -29,24 +36,27 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.mypc.aaiv_voicecontrol.Speech.SpeechAPIService;
-import com.example.mypc.aaiv_voicecontrol.Speech.SpeechApiUtils;
-import com.example.mypc.aaiv_voicecontrol.Translation.TranslationAPIService;
-import com.example.mypc.aaiv_voicecontrol.Translation.TranslationApiUtils;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
-import com.example.mypc.aaiv_voicecontrol.person_model.IdentifyResult;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.example.mypc.aaiv_voicecontrol.services.MainServices;
+import com.example.mypc.aaiv_voicecontrol.services.ObjectService;
 import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
+import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.rest.ClientException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -57,13 +67,12 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.AFFIRMATIVE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.CREATE_LOG_FILE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.FACE_RECOGNITION_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.NEGATIVE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.NO_PERSON_DETECTED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.OBJECT_RECOGNITION_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
+import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 import static com.example.mypc.aaiv_voicecontrol.Constants.REPEAT;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SHOW_LOGS;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_ENG;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_VIE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_CONFIRMATION;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
@@ -80,21 +89,22 @@ public class MainActivity extends AppCompatActivity {
         return i;
     }
 
+    private static final int PERMISSION_CALLBACK_CONSTANT = 100;
+    private static final int REQUEST_PERMISSION_SETTING = 101;
+    String[] permissionsRequired = new String[]{Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.RECORD_AUDIO};
+    private SharedPreferences permissionStatus;
+
+    private SessionManager session;
+
     private MainServices mainServices = new MainServices();
-    Map uploadResult = null;
     private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", "debwqzo2g",
             "api_key", "852288139213848",
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
 
-    private static final String key = "AIzaSyDOi-0A_dUQ0CDIQU_ku2SiYpdZxwP6BtY";
-    private static final String source = "en";
-    private static final String target = "vi";
-    private TranslationAPIService mTranslationAPIService = TranslationApiUtils.getAPIService();
-    private static final SpeechAPIService mAPIService = SpeechApiUtils.getAPIService();
-
-    private TextView txtOutput;
-    private FloatingActionButton fab;
     private ImageView iv_preview;
     private ImageButton mVoiceButton;
     private TextView mTvResult;
@@ -102,18 +112,18 @@ public class MainActivity extends AppCompatActivity {
 
     private File returnCompressedImageFile;
 
-    String imgUrl;
+    private String imgUrl;
 
     private SpeechServices mSpeechServices = new SpeechServices();
     String result = "";
-    IdentifyResult identifyResult;
-
-    private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;
 
     String capture_mode;
 
     private TextToSpeech mTextToSpeech;
+
+    private int status;
+    private String personDetectResultText = "";
+    private String personIdentifyResultText = "";
 
     @BindView(R.id.drawer)
     DrawerLayout drawer;
@@ -126,12 +136,26 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        startBackgroundThread();
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+
+        session = new SessionManager(getApplicationContext());
+        Log.d("isLogin", session.isLoggedIn() ? "logged in" : "not logged in");
+
+        session.checkLoggedIn();
+
+
+        HashMap<String, String> user = session.getUserDetails();
+        Constants.setPersonGroupId(user.get(session.KEY_PERSON_GROUP_ID));
+        Constants.setUserId(user.get(session.KEY_USER_ID));
+        Constants.setUsername(user.get(session.KEY_USERNAME));
+
         initDrawer();
         SetUpText2Speech();
+
+        permissionStatus = getSharedPreferences("permissionStatus", MODE_PRIVATE);
+        AskPermissions();
 
         iv_preview = (ImageView) findViewById(R.id.iv_preview);
         mTvResult = (TextView) findViewById(R.id.txtResult);
@@ -140,9 +164,11 @@ public class MainActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             returnCompressedImageFile = (File) bundle.get("imagefile");
+            capture_mode = bundle.getString("capture_mode");
             if (returnCompressedImageFile != null) {
                 Glide.with(this).load(returnCompressedImageFile.getAbsolutePath()).into(iv_preview);
-                mBackgroundHandler.post(new ImageUploader(cloudinary, returnCompressedImageFile));
+                //mBackgroundHandler.post(new ImageUploader(cloudinary, returnCompressedImageFile));
+                new Detector(returnCompressedImageFile).execute();
             }
         }
 
@@ -150,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         mVoiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
+                startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_VIE);
             }
         });
     }
@@ -165,6 +191,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+        View header = nvNavigation.getHeaderView(0);
+        TextView tvUsername = (TextView) header.findViewById(R.id.tvUsername);
+        tvUsername.setText(Constants.getUsername());
+
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.open, R.string.close);
         drawer.addDrawerListener(actionBarDrawerToggle);
@@ -172,15 +202,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void selectDrawerItem(MenuItem item) {
         int id = item.getItemId();
-        switch (id){
+        Intent intent;
+        switch (id) {
             case R.id.setting:
-
+                intent = new Intent(this, StartUpActivity.class);
+                startActivity(intent);
                 break;
             case R.id.logs:
+                intent = new Intent(this, ShowLogsActivity.class);
+                startActivity(intent);
                 break;
             case R.id.quota:
                 break;
             case R.id.sign_out:
+                session.logoutUser();
                 break;
         }
         drawer.closeDrawers();
@@ -195,12 +230,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        startBackgroundThread();
     }
 
     @Override
     protected void onPause() {
-        stopBackgroundThread();
         super.onPause();
     }
 
@@ -210,93 +243,290 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
     }
 
-    private class ImageUploader implements Runnable {
-        private Cloudinary mCloudinary;
+    private class Detector extends AsyncTask<Void, Void, Void> {
         private File mImageFile;
 
-        public ImageUploader(Cloudinary mCloudinary, File mImageFile) {
-            this.mCloudinary = mCloudinary;
+        public Detector(File mImageFile) {
             this.mImageFile = mImageFile;
         }
 
         @Override
-        public void run() {
+        protected Void doInBackground(Void... params) {
+            new Uploader(mImageFile).execute();
+            return null;
+        }
+    }
+
+    public class Uploader extends AsyncTask<Void, Void, Map> {
+
+        private File compressedFile;
+
+        public Uploader(File compressedFile) {
+            this.compressedFile = compressedFile;
+        }
+
+        @Override
+        protected Map doInBackground(Void... params) {
             try {
-                uploadResult = mCloudinary.uploader().upload(mImageFile, ObjectUtils.emptyMap());
-                if (uploadResult != null) {
-                    imgUrl = (String) uploadResult.get("url");
-                    Log.d("url", imgUrl);
-
-                    Intent intent = getIntent();
-                    if (intent != null && intent.getExtras() != null) {
-                        capture_mode = intent.getStringExtra("capture_mode");
-                        switch (capture_mode) {
-                            case FACE_RECOGNITION_MODE: {
-                                identifyResult = mainServices.IdentifyPerson(imgUrl);
-                                if (identifyResult != null) {
-                                    result = identifyResult.getIdentifyResponse();
-                                    final int status = identifyResult.getIdentifyStatus();
-
-                                    mTvResult.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mTvResult.setText(result);
-                                        }
-                                    });
-
-                                    switch (status) {
-                                        case PERSON_DETECTED_FAILED: {
-                                            Speak(result, SPEECH_ONDONE_CONFIRMATION);
-                                            break;
-                                        }
-                                        case NO_PERSON_DETECTED: {
-                                            Speak(result, SPEECH_ONDONE_NOREQUEST);
-                                            break;
-                                        }
-                                        case PERSON_DETECTED_SUCCESSFULLY: {
-                                            Speak(result, SPEECH_ONDONE_NOREQUEST);
-                                            break;
-                                        }
-                                        default:
-                                            break;
-                                    }
-                                } else {
-                                    Speak("Nhận diện thất bại", SPEECH_ONDONE_NOREQUEST);
-                                }
-
-                                break;
-                            }
-                            case OBJECT_RECOGNITION_MODE: {
-                                result = mainServices.DetectObject(imgUrl);
-                                mTvResult.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mTvResult.setText(result);
-                                    }
-                                });
-                                //mSpeechServices.sendGet(result, mTextToSpeech);
-                                mSpeechServices.sendPost(result);
-                                break;
-                            }
-                            case VIEW_RECOGNITION_MODE: {
-                                result = mainServices.DetectVision(imgUrl).description.captions.get(0).text;
-                                mTvResult.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mTvResult.setText(result);
-                                    }
-                                });
-                                mSpeechServices.sendGet(result, mTextToSpeech);
-                                break;
-                            }
-
-                            default:
-                                break;
-                        }
-                    }
-                }
+                return cloudinary.uploader().upload(compressedFile, ObjectUtils.emptyMap());
             } catch (IOException e) {
                 e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Map map) {
+            if (map != null) {
+                String url = (String) map.get("url");
+                imgUrl = url;
+                switch (capture_mode) {
+                    case FACE_RECOGNITION_MODE: {
+                        new FaceDetection().execute(url);
+                        break;
+                    }
+                    case OBJECT_RECOGNITION_MODE: {
+                        Log.d("imgurl", imgUrl);
+                        new DetectObject(imgUrl).execute();
+                        break;
+                    }
+                    case VIEW_RECOGNITION_MODE: {
+                        result = mainServices.DetectVision(imgUrl).description.captions.get(0).text;
+                        mTvResult.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mTvResult.setText(result);
+                            }
+                        });
+                        mSpeechServices.sendGet(result, mTextToSpeech);
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    private class FaceDetection extends AsyncTask<String, String, Face[]> {
+
+        @Override
+        protected Face[] doInBackground(String... params) {
+            FaceServiceClient client = Constants.getmFaceServiceClient();
+            Log.d("identify", "Detecting");
+            try {
+
+                return client.detect(
+                        params[0],
+                        true,
+                        false,
+                        new FaceServiceClient.FaceAttributeType[]{
+                                FaceServiceClient.FaceAttributeType.Gender
+                        }
+                );
+            } catch (ClientException e) {
+                e.printStackTrace();
+                return null;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Face[] faces) {
+            if (faces != null || faces.length != 0) {
+                List<UUID> faceids = new ArrayList<>();
+                for (Face face : faces) {
+                    faceids.add(face.faceId);
+                }
+
+                new FaceIdentify(PersonGroupId).execute(faceids.toArray(new UUID[faceids.size()]));
+
+                if (faces.length == 1) {
+                    personDetectResultText = "Có một người " + (faces[0].faceAttributes.gender.equals("male") ? "đàn ông" : "phụ nữ");
+                } else if (faces.length > 1) {
+                    personDetectResultText = "Có " + faces.length + "người";
+                }
+            } else {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTvResult.setText("Không có ai cả");
+                    }
+                });
+                Speak("Không có ai cả", SPEECH_ONDONE_NOREQUEST);
+            }
+        }
+    }
+
+    private class FaceIdentify extends AsyncTask<UUID, Void, com.microsoft.projectoxford.face.contract.IdentifyResult[]> {
+
+        String mPersonGroupId;
+
+        public FaceIdentify(String mPersonGroupId) {
+            this.mPersonGroupId = mPersonGroupId;
+        }
+
+        @Override
+        protected com.microsoft.projectoxford.face.contract.IdentifyResult[] doInBackground(UUID... params) {
+            Log.d("identify", "Identifying");
+
+            FaceServiceClient client = Constants.getmFaceServiceClient();
+            try {
+                return client.identity(
+                        this.mPersonGroupId,
+                        params,
+                        1
+                );
+            } catch (ClientException e) {
+                e.printStackTrace();
+                return null;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
+            if (identifyResults != null) {
+                new PersonInfo(identifyResults).execute();
+            }
+        }
+    }
+
+    public class PersonInfo extends AsyncTask<Void, Void, Void> {
+
+        com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults;
+
+        public PersonInfo(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
+            this.identifyResults = identifyResults;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Log.d("identify", "Person");
+
+            final FaceServiceClient client = Constants.getmFaceServiceClient();
+            status = PERSON_DETECTED_FAILED;
+
+            try {
+
+                for (final com.microsoft.projectoxford.face.contract.IdentifyResult identifyResult :
+                        identifyResults) {
+                    if (identifyResult.candidates.size() > 0) {
+                        final String personname = client.getPerson(PersonGroupId, identifyResult.candidates.get(0).personId).name;
+                        personIdentifyResultText += personname + ", ";
+
+                        status = PERSON_DETECTED_SUCCESSFULLY;
+                    }
+                }
+            } catch (ClientException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            switch (status) {
+                case PERSON_DETECTED_SUCCESSFULLY: {
+                    mTvResult.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mTvResult.setText(personIdentifyResultText);
+                            Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
+                        }
+                    });
+                    break;
+                }
+                case PERSON_DETECTED_FAILED: {
+                    mTvResult.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mTvResult.setText(personDetectResultText);
+                            Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
+                        }
+                    });
+                    break;
+                }
+                default: {
+                    mTvResult.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mTvResult.setText("Nhận diện thất bại");
+                            Speak("Nhận diện thất bại", SPEECH_ONDONE_NOREQUEST);
+                        }
+                    });
+                    break;
+                }
+            }
+
+        }
+
+    }
+
+    public class DetectObject extends AsyncTask<Void, Void, String>{
+
+        private String url;
+
+        public DetectObject(String url) {
+            this.url = url;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String returnValue = "";
+
+            ObjectService objectService = new ObjectService();
+            try {
+                Response<ResponseBody> response = objectService.DetectObject(url).execute();
+
+                String jsonStr = response.body().string();
+                Log.i("jsonStr", jsonStr);
+                if(jsonStr.trim().equals("error")){
+                    objectService.CreateLog(url).enqueue(new Callback<MessageResponse>() {
+                        @Override
+                        public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                            Log.d("createLog", "onReponse function");
+                        }
+
+                        @Override
+                        public void onFailure(Call<MessageResponse> call, Throwable t) {
+                            Log.d("createLog", "Create Log Fail");
+                            t.printStackTrace();
+                        }
+                    });
+                    returnValue = "Không xác định được vật thể";
+                }else{
+                    returnValue = jsonStr;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.d("detectobject", "error when detect object MainService");
+                returnValue = "Máy chủ bị lỗi";
+            }
+
+            return returnValue;
+        }
+
+        @Override
+        protected void onPostExecute(final String returnValue) {
+            super.onPostExecute(returnValue);
+            if(returnValue != null){
+                mTvResult.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTvResult.setText(returnValue);
+                    }
+                });
+                mSpeechServices.sendPost(returnValue);
             }
         }
     }
@@ -384,7 +614,11 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
                             if (response.isSuccessful()) {
-                                Toast.makeText(MainActivity.this, "Log created at " + response.body().response.createdate, Toast.LENGTH_SHORT).show();
+                                if (response != null) {
+                                    Toast.makeText(MainActivity.this, "Log created at " + response.body().response.createdate, Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Create log failed", Toast.LENGTH_SHORT).show();
+                                }
                             }
                         }
 
@@ -396,6 +630,11 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
                 break;
+            }
+            case REQUEST_PERMISSION_SETTING: {
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[0]) == PackageManager.PERMISSION_GRANTED) {
+
+                }
             }
             default:
                 break;
@@ -437,7 +676,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onDone(String utteranceId) {
                             switch (utteranceId) {
                                 case SPEECH_ONDONE_CONFIRMATION: {
-                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_ENG);
+                                    startSpeechToText("Bạn có muốn thêm người này ?", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_VIE);
                                     break;
                                 }
                                 case SPEECH_ONDONE_NOREQUEST: {
@@ -470,22 +709,107 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void stopBackgroundThread() {
-        mBackgroundThread.quitSafely();
-        try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private void AskPermissions() {
+        if (ActivityCompat.checkSelfPermission(this, permissionsRequired[0]) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(this, permissionsRequired[1]) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(this, permissionsRequired[2]) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(this, permissionsRequired[3]) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permissionsRequired[0])
+                    || ActivityCompat.shouldShowRequestPermissionRationale(this, permissionsRequired[1])
+                    || ActivityCompat.shouldShowRequestPermissionRationale(this, permissionsRequired[2])
+                    || ActivityCompat.shouldShowRequestPermissionRationale(this, permissionsRequired[3])) {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Quyền truy cập");
+                builder.setMessage(" Ứng dụng cần quyền truy cập Camera và Thư mục ");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, PERMISSION_CALLBACK_CONSTANT);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            } else if (permissionStatus.getBoolean(permissionsRequired[0], false)) {
+                //Previously Permission Request was cancelled with 'Dont Ask Again',
+                // Redirect to Settings after showing Information about why you need the permission
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Quyền truy cập");
+                builder.setMessage("Ứng dụng cần quyền truy cập Camera và Thư mục");
+                builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivityForResult(intent, REQUEST_PERMISSION_SETTING);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            } else {
+                ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, PERMISSION_CALLBACK_CONSTANT);
+            }
+
+            SharedPreferences.Editor editor = permissionStatus.edit();
+            editor.putBoolean(permissionsRequired[0], true);
+            editor.commit();
         }
     }
 
-    private void startBackgroundThread() {
-        Log.d("thread", "start background thread");
-        mBackgroundThread = new HandlerThread("MainActivityBackground");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_CALLBACK_CONSTANT) {
+            //check if all permissions are granted
+            boolean allgranted = false;
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    allgranted = true;
+                } else {
+                    allgranted = false;
+                    break;
+                }
+            }
+
+            if (allgranted) {
+
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permissionsRequired[0])
+                    || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permissionsRequired[1])
+                    || ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permissionsRequired[2])) {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("Quyền truy cập");
+                builder.setMessage("Ứng dụng cần quyền truy cập Camera và Thư mục");
+                builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, PERMISSION_CALLBACK_CONSTANT);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            }
+        }
     }
 }
 

@@ -144,11 +144,9 @@ public class MainServices {
         return visionResponse;
     }
 
+
+
     public String DetectObject(String url) {
-        JSONObject outputPart = null;
-        JSONObject firstConcept = null;
-        String valueStr = "";
-        JSONObject jsonClarifai  = null;
         String returnValue = "";
 
         ObjectService objectService = new ObjectService();

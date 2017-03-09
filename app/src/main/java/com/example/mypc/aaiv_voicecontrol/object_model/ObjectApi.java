@@ -23,5 +23,5 @@ public interface ObjectApi {
 
     @FormUrlEncoded
     @POST("CreateLogObject")
-    Call<MessageResponse> CreateLog(@Field("ImageUrl") String ImageUrl);
+    Call<MessageResponse> CreateLog(@Field("ImageUrl") String ImageUrl, @Field("userID") String userId);
 }
