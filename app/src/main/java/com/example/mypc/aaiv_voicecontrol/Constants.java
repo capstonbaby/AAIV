@@ -191,7 +191,7 @@ public class Constants {
     public static final String ADD_NEW_PERSON_MODE = "new";
     public static final String UPDATE_PERSON_MODE = "update";
 
-    public static String PersonGroupId = "";
+    public static String PersonGroupId = "empty";
     public static String UserId = "";
     public static String Username = "";
 

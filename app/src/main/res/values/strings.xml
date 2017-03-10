@@ -35,4 +35,8 @@
 
     <string name="open">Open</string>
     <string name="close">Close</string>
+    <string name="ok">OK</string>
+    <string name="permission_camera_rationale">Cần quyền camera để phát hiện khuôn mặt</string>
+    <string name="no_camera_permission">Ứng dụng không thể chạy vì không có quyền mở camera.</string>
+    <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
 </resources>
