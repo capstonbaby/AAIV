@@ -1,6 +1,7 @@
 package com.example.mypc.aaiv_voicecontrol.services;
 
 import com.example.mypc.aaiv_voicecontrol.Constants;
+import com.example.mypc.aaiv_voicecontrol.data_model.Data;
 import com.example.mypc.aaiv_voicecontrol.data_model.DataApi;
 import com.example.mypc.aaiv_voicecontrol.data_model.LoginResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
@@ -54,6 +55,27 @@ public class DataService {
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.Register(email, password, confirmPassword);
+    }
+
+    public Call<ResponseModel> CreatePerson(String personGroupID, String personId, String personName, String personDes){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.CreatPerson(personGroupID, personId, personName, personDes);
+    }
+
+    public Call<ResponseModel> UpdatePerson(String personId, String personName, String personDes){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.UpdatePerson(personId, personName, personDes);
+    }
+
+    public Call<ResponseModel> AddPersonFace(String persistedFaceId, String personId, String imgUrl){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.AddPersonFace(persistedFaceId, personId, imgUrl);
     }
 
     public Retrofit getRetrofitDataApi() {

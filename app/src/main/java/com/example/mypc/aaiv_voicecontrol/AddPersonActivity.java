@@ -23,12 +23,14 @@ import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.mypc.aaiv_voicecontrol.Adapters.GridViewAdapter;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.AddPersistedFaceResult;
@@ -64,6 +66,7 @@ public class AddPersonActivity extends AppCompatActivity {
     private Button bt_train;
     private FloatingActionButton fab_add_image;
     private ProgressBar progressBar;
+    private TextView tv_error;
 
     public static Context context;
 
@@ -112,6 +115,7 @@ public class AddPersonActivity extends AppCompatActivity {
 //        fab_add_image = (FloatingActionButton) findViewById(R.id.fab_add_image);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         bt_train = (Button) findViewById(R.id.bt_train);
+        tv_error = (TextView) findViewById(R.id.tv_error);
 
         gridView = (GridView) findViewById(R.id.gridView);
         gridAdapter = new GridViewAdapter(this, R.layout.grid_item_layout, mImagePaths);
@@ -350,44 +354,93 @@ public class AddPersonActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(CreatePersonResult createPersonResult) {
+        protected void onPostExecute(final CreatePersonResult createPersonResult) {
             if (createPersonResult != null) {
-                if (mImagePaths.size() > 0) {
-                    for (String imgUrl :
-                            mImagePaths) {
-                        File imageFile = new File(imgUrl);
-                        if (imageFile.exists()) {
-                            File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                            new Uploader(compressedImage, createPersonResult.personId.toString()).execute();
-                        } else {
-                            new AddPersonFace(personGroupId, imgUrl).execute(createPersonResult.personId);
-                        }
-                        if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
-                            if (logFile != null) {
-                                DataService dataService = new DataService();
-                                dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
-                                    @Override
-                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
-                                        if (response.isSuccessful()) {
-                                            Log.d("deactivelog", response.body().message);
-                                            progressBar.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    progressBar.setVisibility(View.INVISIBLE);
-                                                }
-                                            });
+                DataService service = new DataService();
+                service.CreatePerson(personGroupId, createPersonResult.personId.toString(), personName, personDes).enqueue(new Callback<ResponseModel>() {
+                    @Override
+                    public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
+                        if (response.isSuccessful()) {
+                            if (response.body().success) {
+                                if (mImagePaths.size() > 0) {
+                                    for (String imgUrl :
+                                            mImagePaths) {
+                                        File imageFile = new File(imgUrl);
+                                        if (imageFile.exists()) {
+                                            File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
+                                            new Uploader(compressedImage, createPersonResult.personId.toString()).execute();
+                                        } else {
+                                            new AddPersonFace(personGroupId, imgUrl).execute(createPersonResult.personId);
+                                        }
+                                        if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
+                                            if (logFile != null) {
+                                                DataService dataService = new DataService();
+                                                dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
+                                                    @Override
+                                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                                        if (response.isSuccessful()) {
+                                                            Log.d("deactivelog", response.body().message);
+                                                            progressBar.post(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    progressBar.setVisibility(View.INVISIBLE);
+                                                                }
+                                                            });
+                                                        }
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
+                                                        runOnUiThread(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                progressBar.setVisibility(View.INVISIBLE);
+                                                                tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                                tv_error.setVisibility(View.VISIBLE);
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            }
                                         }
                                     }
-
+                                }
+                            } else {
+                                runOnUiThread(new Runnable() {
                                     @Override
-                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
-
+                                    public void run() {
+                                        progressBar.setVisibility(View.INVISIBLE);
+                                        tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                        tv_error.setVisibility(View.VISIBLE);
                                     }
                                 });
                             }
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressBar.setVisibility(View.INVISIBLE);
+                                    tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                    tv_error.setVisibility(View.VISIBLE);
+                                }
+                            });
                         }
                     }
-                }
+
+                    @Override
+                    public void onFailure(Call<ResponseModel> call, Throwable t) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBar.setVisibility(View.INVISIBLE);
+                                tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                tv_error.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
+                });
+
+
             }
         }
     }

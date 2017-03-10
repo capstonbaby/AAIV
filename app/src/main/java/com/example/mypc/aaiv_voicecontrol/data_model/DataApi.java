@@ -42,6 +42,8 @@ public interface DataApi {
     @POST("UpdatePerson")
     Call<ResponseModel> UpdatePerson(@Field("PersonId") String PersonId, @Field("Name") String personName, @Field("Description") String personDes);
 
-
+    @FormUrlEncoded
+    @POST("AddPersonFace")
+    Call<ResponseModel> AddPersonFace(@Field("PersistedFaceId") String persistedFaceId, @Field("PersonID") String personId, @Field("ImageURL") String imgUrl);
 
 }
