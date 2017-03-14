@@ -33,10 +33,6 @@ public interface PersonApi {
     Call<List<PersonGroup>> getPersonGroup();
 
     @FormUrlEncoded
-    @POST("getpeopleingroup")
-    Call<List<Person>> getPeopleInGroup(@Field("personGroupId") String personGroupId);
-
-    @FormUrlEncoded
     @POST("trainpersongroup")
     Call<Void> trainPersonGroup(@Field("personGroupId") String personGroupId);
 
@@ -45,6 +41,6 @@ public interface PersonApi {
     Call<AddPersonResponse> createPerson(@Field("personGroupId") String personGroupId, @Field("personName") String personName, @Field("userData") String personDescription);
 
     @FormUrlEncoded
-    @POST("addpersonface")
-    Call<AddPersonFaceResponse> addPersonFace(@Field("personGroupId") String personGroupId, @Field("personId") String personId, @Field("userData") @Nullable String userData, @Field("urlImage") String urlImage);
+    @POST("updateperson")
+    Call<Void> UpdatePerson(@Field("personGroupId") String personGroupId, @Field("personId") String personId, @Field("personName") String personName, @Field("userData") String userData);
 }

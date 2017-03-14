@@ -30,7 +30,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        Constants.setApiHost("192.168.0.34");
+        Constants.setApiHost("172.20.10.14");
 
         sessionManager = new SessionManager(getApplicationContext());
         Log.d("isLogin", sessionManager.isLoggedIn() ? "logged in" : "not logged in");

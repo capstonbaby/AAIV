@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -19,11 +20,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.example.mypc.aaiv_voicecontrol.Adapters.PersonsAdapter;
 import com.example.mypc.aaiv_voicecontrol.Utils.DividerItemDecoration;
 import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInGroupModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
+import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.Person;
 import com.microsoft.projectoxford.face.rest.ClientException;
@@ -34,6 +39,9 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
@@ -47,12 +55,14 @@ public class UpdatePersonActivity extends AppCompatActivity {
         return context;
     }
 
-    private List<Person> mPersonList = new ArrayList<>();
+    //private List<Person> mPersonList = new ArrayList<>();
+    private List<PersonModel> mPersonList = new ArrayList<>();
     private PersonsAdapter mPersonsAdapter;
     private ProgressBar mProgressBar;
     private RecyclerView mRecyclerView;
     private Button mBtAddNewPerson;
     private LogResponse log;
+    private TextView tvNoPerson;
 
     @BindView(R.id.fabAdd)
     FloatingActionButton fabAdd;
@@ -73,10 +83,11 @@ public class UpdatePersonActivity extends AppCompatActivity {
 
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_persons);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_persons);
+        tvNoPerson = (TextView) findViewById(R.id.tv_no_person);
 //        mBtAddNewPerson = (Button) findViewById(R.id.bt_new_person);
 
         mProgressBar.setVisibility(View.VISIBLE);
-        new ListPerson().execute(PersonGroupId);
+        //new ListPerson().execute(PersonGroupId);
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -93,6 +104,88 @@ public class UpdatePersonActivity extends AppCompatActivity {
             }
         });
         initNavigation();
+
+        DataService service = new DataService();
+        service.GetPeopleInGroup(Constants.getPersonGroupId()).enqueue(new Callback<GetPersonInGroupModel>() {
+            @Override
+            public void onResponse(Call<GetPersonInGroupModel> call, Response<GetPersonInGroupModel> response) {
+                if (response.isSuccessful()) {
+                    GetPersonInGroupModel getPersonInGroupModel = response.body();
+                    if (getPersonInGroupModel.success) {
+                        if (getPersonInGroupModel.data.size() > 0) {
+                            mPersonList = getPersonInGroupModel.data;
+                            mPersonsAdapter = new PersonsAdapter(mPersonList);
+                            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+                            mRecyclerView.setLayoutManager(layoutManager);
+                            mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+                            mRecyclerView.addItemDecoration(new DividerItemDecoration(UpdatePersonActivity.this, LinearLayoutManager.VERTICAL));
+                            mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
+                                @Override
+                                public void onClick(View view, int position) {
+                                    PersonModel person = mPersonList.get(position);
+                                    Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
+                                    if (log != null) {
+                                        intent.putExtra("logFile", log);
+                                    }
+                                    intent.putExtra("mode", UPDATE_PERSON_MODE);
+                                    intent.putExtra("person", person);
+
+                                    startActivity(intent);
+                                }
+
+                                @Override
+                                public void onLongClick(View view, int position) {
+
+                                }
+                            }));
+
+                            mRecyclerView.setAdapter(mPersonsAdapter);
+                            mProgressBar.setVisibility(View.INVISIBLE);
+                        } else {
+                            mProgressBar.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mProgressBar.setVisibility(View.INVISIBLE);
+                                }
+                            });
+                            tvNoPerson.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        mProgressBar.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mProgressBar.setVisibility(View.INVISIBLE);
+                            }
+                        });
+                        tvNoPerson.setText("Error");
+                        tvNoPerson.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    mProgressBar.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mProgressBar.setVisibility(View.INVISIBLE);
+                        }
+                    });
+                    tvNoPerson.setText("Error");
+                    tvNoPerson.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<GetPersonInGroupModel> call, Throwable t) {
+                mProgressBar.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProgressBar.setVisibility(View.INVISIBLE);
+                    }
+                });
+                tvNoPerson.setText("Error");
+                tvNoPerson.setVisibility(View.VISIBLE);
+            }
+        });
+
+
     }
 
     private void initNavigation() {
@@ -126,64 +219,66 @@ public class UpdatePersonActivity extends AppCompatActivity {
         }
         drawer.closeDrawers();
     }
+
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         actionBarDrawerToggle.syncState();
     }
-    public class ListPerson extends AsyncTask<String, Void, Person[]> {
 
-        @Override
-        protected Person[] doInBackground(String... params) {
-            FaceServiceClient client = Constants.getmFaceServiceClient();
-            try {
-                return client.getPersons(params[0]);
-            } catch (ClientException e) {
-                e.printStackTrace();
-                return null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Person[] persons) {
-            if (persons != null) {
-
-                for (Person person :
-                        persons) {
-                    mPersonList.add(person);
-                }
-                mPersonsAdapter = new PersonsAdapter(mPersonList);
-                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
-                mRecyclerView.setLayoutManager(layoutManager);
-                mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-                mRecyclerView.addItemDecoration(new DividerItemDecoration(UpdatePersonActivity.this, LinearLayoutManager.VERTICAL));
-                mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
-                    @Override
-                    public void onClick(View view, int position) {
-                        if (log != null) {
-                            Person person = mPersonList.get(position);
-                            Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
-                            intent.putExtra("logFile", log);
-                            intent.putExtra("personId", person.personId.toString());
-                            intent.putExtra("personName", person.name);
-                            intent.putExtra("personDes", person.userData);
-                            intent.putExtra("mode", UPDATE_PERSON_MODE);
-                            startActivity(intent);
-                        }
-                    }
-
-                    @Override
-                    public void onLongClick(View view, int position) {
-
-                    }
-                }));
-
-                mRecyclerView.setAdapter(mPersonsAdapter);
-                mProgressBar.setVisibility(View.INVISIBLE);
-            }
-        }
-    }
+//    public class ListPerson extends AsyncTask<String, Void, Person[]> {
+//
+//        @Override
+//        protected Person[] doInBackground(String... params) {
+//            FaceServiceClient client = Constants.getmFaceServiceClient();
+//            try {
+//                return client.getPersons(params[0]);
+//            } catch (ClientException e) {
+//                e.printStackTrace();
+//                return null;
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                return null;
+//            }
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Person[] persons) {
+//            if (persons != null) {
+//
+//                for (Person person :
+//                        persons) {
+//                    mPersonList.add(person);
+//                }
+//                mPersonsAdapter = new PersonsAdapter(mPersonList);
+//                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+//                mRecyclerView.setLayoutManager(layoutManager);
+//                mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+//                mRecyclerView.addItemDecoration(new DividerItemDecoration(UpdatePersonActivity.this, LinearLayoutManager.VERTICAL));
+//                mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
+//                    @Override
+//                    public void onClick(View view, int position) {
+//                        if (log != null) {
+//                            Person person = mPersonList.get(position);
+//                            Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
+//                            intent.putExtra("logFile", log);
+//                            intent.putExtra("personId", person.personId.toString());
+//                            intent.putExtra("personName", person.name);
+//                            intent.putExtra("personDes", person.userData);
+//                            intent.putExtra("mode", UPDATE_PERSON_MODE);
+//                            startActivity(intent);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onLongClick(View view, int position) {
+//
+//                    }
+//                }));
+//
+//                mRecyclerView.setAdapter(mPersonsAdapter);
+//                mProgressBar.setVisibility(View.INVISIBLE);
+//            }
+//        }
+//    }
 }

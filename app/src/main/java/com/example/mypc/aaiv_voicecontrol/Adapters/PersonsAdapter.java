@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.mypc.aaiv_voicecontrol.R;
+import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
 import com.microsoft.projectoxford.face.contract.Person;
 
 import java.util.List;
@@ -17,9 +18,9 @@ import java.util.List;
 
 public class PersonsAdapter extends RecyclerView.Adapter<PersonsAdapter.MyViewHolder>{
 
-    private List<Person> mPersonList;
+    private List<PersonModel> mPersonList;
 
-    public PersonsAdapter(List<Person> mPersonList) {
+    public PersonsAdapter(List<PersonModel> mPersonList) {
         this.mPersonList = mPersonList;
     }
 
@@ -32,7 +33,7 @@ public class PersonsAdapter extends RecyclerView.Adapter<PersonsAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        Person person = mPersonList.get(position);
+        PersonModel person = mPersonList.get(position);
         holder.mTvPersonName.setText(person.name);
     }
 

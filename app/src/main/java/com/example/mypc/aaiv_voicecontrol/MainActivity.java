@@ -217,6 +217,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.sign_out:
                 session.logoutUser();
                 break;
+            case R.id.people_in_group:
+                intent = new Intent(this, UpdatePersonActivity.class);
+                startActivity(intent);
+                break;
+            default:
+                break;
         }
         drawer.closeDrawers();
     }
@@ -336,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Face[] faces) {
-            if (faces != null || faces.length != 0) {
+            if (faces != null && faces.length != 0) {
                 List<UUID> faceids = new ArrayList<>();
                 for (Face face : faces) {
                     faceids.add(face.faceId);
@@ -472,7 +478,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public class DetectObject extends AsyncTask<Void, Void, String>{
+    public class DetectObject extends AsyncTask<Void, Void, String> {
 
         private String url;
 
@@ -490,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
 
                 String jsonStr = response.body().string();
                 Log.i("jsonStr", jsonStr);
-                if(jsonStr.trim().equals("error")){
+                if (jsonStr.trim().equals("error")) {
                     objectService.CreateLog(url).enqueue(new Callback<MessageResponse>() {
                         @Override
                         public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
@@ -504,7 +510,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                     returnValue = "Không xác định được vật thể";
-                }else{
+                } else {
                     returnValue = jsonStr;
                 }
             } catch (Exception e) {
@@ -519,14 +525,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(final String returnValue) {
             super.onPostExecute(returnValue);
-            if(returnValue != null){
+            if (returnValue != null) {
                 mTvResult.post(new Runnable() {
                     @Override
                     public void run() {
                         mTvResult.setText(returnValue);
                     }
                 });
-                mSpeechServices.sendPost(returnValue);
+                //mSpeechServices.sendPost(returnValue);
+                Speak(returnValue, SPEECH_ONDONE_NOREQUEST);
             }
         }
     }
@@ -590,7 +597,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                         case STREAM_DETECT: {
-                            Intent intent = new Intent(this, CloudiaryTest.class);
+                            Intent intent = new Intent(this, FaceTrackerActivity.class);
                             startActivity(intent);
                             break;
                         }

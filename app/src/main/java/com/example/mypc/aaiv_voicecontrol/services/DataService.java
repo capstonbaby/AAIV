@@ -3,11 +3,13 @@ package com.example.mypc.aaiv_voicecontrol.services;
 import com.example.mypc.aaiv_voicecontrol.Constants;
 import com.example.mypc.aaiv_voicecontrol.data_model.Data;
 import com.example.mypc.aaiv_voicecontrol.data_model.DataApi;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInGroupModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LoginResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
 
+import java.net.DatagramPacket;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -68,7 +70,7 @@ public class DataService {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
-        return dataApi.UpdatePerson(personId, personName, personDes);
+        return dataApi.UpdatePerson(Constants.getPersonGroupId(), personId, personName, personDes);
     }
 
     public Call<ResponseModel> AddPersonFace(String persistedFaceId, String personId, String imgUrl){
@@ -76,6 +78,13 @@ public class DataService {
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.AddPersonFace(persistedFaceId, personId, imgUrl);
+    }
+
+    public Call<GetPersonInGroupModel> GetPeopleInGroup(String personGroupId){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.GetPeopleInGroup(personGroupId);
     }
 
     public Retrofit getRetrofitDataApi() {

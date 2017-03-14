@@ -13,7 +13,6 @@ import retrofit2.http.POST;
 
 public interface DataApi {
 
-    /*TODO: ADD USER ID AFTER IMPLIMENT LOGIN FUNCTION*/
     @FormUrlEncoded
     @POST("CreateLog")
     Call<MessageResponse> CreateLog(@Field("ImageUrl") String ImageUrl, @Field("Name") String name, @Field("userId") String userId);
@@ -40,10 +39,14 @@ public interface DataApi {
 
     @FormUrlEncoded
     @POST("UpdatePerson")
-    Call<ResponseModel> UpdatePerson(@Field("PersonId") String PersonId, @Field("Name") String personName, @Field("Description") String personDes);
+    Call<ResponseModel> UpdatePerson(@Field("persongroupId") String personGroupId, @Field("PersonId") String PersonId, @Field("Name") String personName, @Field("Description") String personDes);
 
     @FormUrlEncoded
     @POST("AddPersonFace")
     Call<ResponseModel> AddPersonFace(@Field("PersistedFaceId") String persistedFaceId, @Field("PersonID") String personId, @Field("ImageURL") String imgUrl);
+
+    @FormUrlEncoded
+    @POST("getpeopleingroup")
+    Call<GetPersonInGroupModel> GetPeopleInGroup(@Field("PersonGroupId") String personGroupId);
 
 }

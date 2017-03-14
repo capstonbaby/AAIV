@@ -28,10 +28,17 @@ import android.widget.TextView;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.mypc.aaiv_voicecontrol.Adapters.GridViewAdapter;
+import com.example.mypc.aaiv_voicecontrol.data_model.Data;
+import com.example.mypc.aaiv_voicecontrol.data_model.FaceModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
+import com.example.mypc.aaiv_voicecontrol.person_model.AddPersonFaceResponse;
+import com.example.mypc.aaiv_voicecontrol.person_model.AddPersonResponse;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
+import com.example.mypc.aaiv_voicecontrol.services.MainServices;
+import com.example.mypc.aaiv_voicecontrol.services.PersonServices;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.AddPersistedFaceResult;
 import com.microsoft.projectoxford.face.contract.CreatePersonResult;
@@ -42,6 +49,7 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -59,7 +67,7 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.UPDATE_PERSON_MODE;
 
 public class AddPersonActivity extends AppCompatActivity {
 
-    private String mImageLink;
+    private PersonModel updatePerson;
     private TextInputLayout txtPersonName;
     private TextInputLayout txtPersonDes;
     private Button bt_cretePerson;
@@ -145,6 +153,7 @@ public class AddPersonActivity extends AppCompatActivity {
         if (bundle != null) {
             String mode = bundle.getString("mode");
             LogResponse log = (LogResponse) bundle.getParcelable("logFile");
+            PersonModel person = bundle.getParcelable("person");
             switch (mode) {
                 case ADD_NEW_PERSON_MODE: {
                     if (log != null) {
@@ -157,38 +166,313 @@ public class AddPersonActivity extends AppCompatActivity {
                     bt_cretePerson.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            new CreatePerson(
-                                    PersonGroupId,
-                                    txtPersonName.getEditText().getText().toString(),
-                                    txtPersonDes.getEditText().getText().toString()
-                            ).execute();
-                            //CreatePerson(txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString(), "friend");
+                            PersonServices services = new PersonServices();
+                            final String personName = txtPersonName.getEditText().getText().toString();
+                            final String personDes = txtPersonDes.getEditText().getText().toString();
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressBar.setVisibility(View.VISIBLE);
+                                }
+                            });
+
+                            services.CreatePerson(
+                                    personName,
+                                    personDes,
+                                    Constants.getPersonGroupId()
+                            ).enqueue(new Callback<AddPersonResponse>() {
+                                @Override
+                                public void onResponse(Call<AddPersonResponse> call, Response<AddPersonResponse> response) {
+                                    if (response.isSuccessful()) {
+                                        final String personId = response.body().getPersonId();
+                                        DataService service = new DataService();
+                                        service.CreatePerson(Constants.getPersonGroupId(), personId, personName, personDes).enqueue(new Callback<ResponseModel>() {
+                                            @Override
+                                            public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
+                                                if (response.isSuccessful()) {
+                                                    if (response.body().success) {
+                                                        if (mImagePaths.size() > 0) {
+                                                            for (String imgUrl :
+                                                                    mImagePaths) {
+                                                                File imageFile = new File(imgUrl);
+                                                                if (imageFile.exists()) {
+                                                                    File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
+                                                                    new Uploader(compressedImage, personId).execute();
+                                                                } else {
+                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                }
+                                                                if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
+                                                                    if (logFile != null) {
+                                                                        DataService dataService = new DataService();
+                                                                        dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
+                                                                            @Override
+                                                                            public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                                                                if (response.isSuccessful()) {
+                                                                                    Log.d("deactivelog", response.body().message);
+                                                                                    progressBar.post(new Runnable() {
+                                                                                        @Override
+                                                                                        public void run() {
+                                                                                            progressBar.setVisibility(View.INVISIBLE);
+                                                                                        }
+                                                                                    });
+                                                                                }
+                                                                            }
+
+                                                                            @Override
+                                                                            public void onFailure(Call<MessageResponse> call, Throwable t) {
+                                                                                runOnUiThread(new Runnable() {
+                                                                                    @Override
+                                                                                    public void run() {
+                                                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                                                        tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                                                        tv_error.setVisibility(View.VISIBLE);
+                                                                                    }
+                                                                                });
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            }
+                                                            runOnUiThread(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    progressBar.setVisibility(View.INVISIBLE);
+                                                                }
+                                                            });
+                                                        }
+                                                    } else {
+                                                        runOnUiThread(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                progressBar.setVisibility(View.INVISIBLE);
+                                                                tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                                tv_error.setVisibility(View.VISIBLE);
+                                                            }
+                                                        });
+                                                    }
+                                                } else {
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            progressBar.setVisibility(View.INVISIBLE);
+                                                            tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                            tv_error.setVisibility(View.VISIBLE);
+                                                        }
+                                                    });
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onFailure(Call<ResponseModel> call, Throwable t) {
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                        tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                        tv_error.setVisibility(View.VISIBLE);
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<AddPersonResponse> call, Throwable t) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            progressBar.setVisibility(View.INVISIBLE);
+                                            tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                            tv_error.setVisibility(View.VISIBLE);
+                                        }
+                                    });
+                                }
+                            });
                         }
                     });
                     break;
                 }
                 case UPDATE_PERSON_MODE: {
+                    final String personId = person.personid;
+                    txtPersonName.getEditText().setText(person.name);
+                    txtPersonDes.getEditText().setText(person.userData);
+                    updatePerson = person;
+                    bt_cretePerson.setText("UPDATE");
+                    gridAdapter.notifyDataSetChanged();
+                    IMAGE_AMOUNT = 2;
+
                     if (log != null) {
                         logFile = log;
-                        final String personId = bundle.getString("personId");
-                        txtPersonName.getEditText().setText(bundle.getString("personName"));
-                        txtPersonDes.getEditText().setText(bundle.getString("personDes"));
-                        bt_cretePerson.setText("UPDATE");
-
                         mImagePaths.add(logFile.imgUrl);
-                        gridAdapter.notifyDataSetChanged();
-                        IMAGE_AMOUNT = 2;
 
                         bt_cretePerson.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                new UpdatePerson(
-                                        PersonGroupId,
-                                        personId,
-                                        txtPersonName.getEditText().getText().toString(),
-                                        txtPersonDes.getEditText().getText().toString()
-                                ).execute();
-                                //CreatePerson(txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString(), "friend");
+                                DataService services = new DataService();
+                                progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressBar.setVisibility(View.VISIBLE);
+                                    }
+                                });
+                                services.UpdatePerson(personId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
+                                        .enqueue(new Callback<ResponseModel>() {
+                                            @Override
+                                            public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
+                                                if (response.isSuccessful()) {
+                                                    if (response.body().success) {
+                                                        if (mImagePaths.size() > 0) {
+                                                            for (String imgUrl :
+                                                                    mImagePaths) {
+                                                                File imageFile = new File(imgUrl);
+                                                                if (imageFile.exists()) {
+                                                                    File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
+                                                                    new Uploader(compressedImage, personId).execute();
+                                                                } else {
+                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                }
+                                                                if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
+                                                                    if (logFile != null) {
+                                                                        DataService dataService = new DataService();
+                                                                        dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
+                                                                            @Override
+                                                                            public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                                                                if (response.isSuccessful()) {
+                                                                                    Log.d("deactivelog", response.body().message);
+                                                                                }
+                                                                            }
+
+                                                                            @Override
+                                                                            public void onFailure(Call<MessageResponse> call, Throwable t) {
+
+                                                                            }
+                                                                        });
+                                                                        progressBar.post(new Runnable() {
+                                                                            @Override
+                                                                            public void run() {
+                                                                                progressBar.setVisibility(View.INVISIBLE);
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            }
+                                                            progressBar.post(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    progressBar.setVisibility(View.INVISIBLE);
+                                                                }
+                                                            });
+                                                        }
+                                                        progressBar.post(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                progressBar.setVisibility(View.INVISIBLE);
+                                                            }
+                                                        });
+                                                    }
+                                                    progressBar.post(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            progressBar.setVisibility(View.INVISIBLE);
+                                                        }
+                                                    });
+                                                }
+                                                progressBar.post(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                    }
+                                                });
+                                            }
+
+                                            @Override
+                                            public void onFailure(Call<ResponseModel> call, Throwable t) {
+                                                progressBar.post(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                    }
+                                                });
+                                            }
+                                        });
+
+                            }
+                        });
+                    } else {
+                        for ( FaceModel face :
+                                updatePerson.faces) {
+                            mImagePaths.add(face.imageUrl);
+                        }
+                        gridAdapter.notifyDataSetChanged();
+                        bt_cretePerson.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                DataService services = new DataService();
+                                progressBar.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progressBar.setVisibility(View.VISIBLE);
+                                    }
+                                });
+                                services.UpdatePerson(personId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
+                                        .enqueue(new Callback<ResponseModel>() {
+                                            @Override
+                                            public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
+                                                if (response.isSuccessful()) {
+                                                    if (response.body().success) {
+                                                        if (mImagePaths.size() > 0) {
+                                                            for (String imgUrl :
+                                                                    mImagePaths) {
+                                                                File imageFile = new File(imgUrl);
+                                                                if (imageFile.exists()) {
+                                                                    File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
+                                                                    new Uploader(compressedImage, personId).execute();
+                                                                } else {
+                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                }
+                                                            }
+                                                            progressBar.post(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    progressBar.setVisibility(View.INVISIBLE);
+                                                                }
+                                                            });
+                                                        }
+                                                        progressBar.post(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                progressBar.setVisibility(View.INVISIBLE);
+                                                            }
+                                                        });
+                                                    }
+                                                    progressBar.post(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            progressBar.setVisibility(View.INVISIBLE);
+                                                        }
+                                                    });
+                                                }
+                                                progressBar.post(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                    }
+                                                });
+                                            }
+
+                                            @Override
+                                            public void onFailure(Call<ResponseModel> call, Throwable t) {
+                                                progressBar.post(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                    }
+                                                });
+                                            }
+                                        });
+
                             }
                         });
                     }
@@ -207,17 +491,6 @@ public class AddPersonActivity extends AppCompatActivity {
                         .start(AddPersonActivity.this, REQUEST_IMAGE);
             }
         });
-//        fab_add_image.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                MultiImageSelector.create(AddPersonActivity.this)
-//                        .showCamera(true)
-//                        .count(IMAGE_AMOUNT)
-//                        .multi()
-//                        .start(AddPersonActivity.this, REQUEST_IMAGE);
-//            }
-//        });
-
         bt_train.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -284,16 +557,8 @@ public class AddPersonActivity extends AppCompatActivity {
 
         switch (requestCode) {
             case REQUEST_IMAGE: {
-                if (mImagePaths.size() >= 3) {
-                    new AlertDialog.Builder(AddPersonActivity.this)
-                            .setMessage("Không thể thêm nhiều quá 3 hình")
-                            .setTitle("Lưu ý !")
-                            .setPositiveButton("Ok", null)
-                            .show();
-                } else {
-                    mImagePaths.addAll(data.getStringArrayListExtra(MultiImageSelector.EXTRA_RESULT));
-                    gridAdapter.notifyDataSetChanged();
-                }
+                mImagePaths.addAll(data.getStringArrayListExtra(MultiImageSelector.EXTRA_RESULT));
+                gridAdapter.notifyDataSetChanged();
                 break;
             }
             case REQUEST_IMAGE_SINGLE: {
@@ -319,226 +584,15 @@ public class AddPersonActivity extends AppCompatActivity {
 
     }
 
-    public class CreatePerson extends AsyncTask<Void, Void, CreatePersonResult> {
-
-        private String personGroupId;
-        private String personName;
-        private String personDes;
-
-        public CreatePerson(String personGroupId, String personName, String personDes) {
-            this.personGroupId = personGroupId;
-            this.personName = personName;
-            this.personDes = personDes;
-        }
-
-        @Override
-        protected CreatePersonResult doInBackground(Void... params) {
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setVisibility(View.VISIBLE);
-                }
-            });
-
-            FaceServiceClient client = Constants.getmFaceServiceClient();
-
-            try {
-                return client.createPerson(personGroupId, personName, personDes);
-            } catch (ClientException e) {
-                e.printStackTrace();
-                return null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(final CreatePersonResult createPersonResult) {
-            if (createPersonResult != null) {
-                DataService service = new DataService();
-                service.CreatePerson(personGroupId, createPersonResult.personId.toString(), personName, personDes).enqueue(new Callback<ResponseModel>() {
-                    @Override
-                    public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
-                        if (response.isSuccessful()) {
-                            if (response.body().success) {
-                                if (mImagePaths.size() > 0) {
-                                    for (String imgUrl :
-                                            mImagePaths) {
-                                        File imageFile = new File(imgUrl);
-                                        if (imageFile.exists()) {
-                                            File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                            new Uploader(compressedImage, createPersonResult.personId.toString()).execute();
-                                        } else {
-                                            new AddPersonFace(personGroupId, imgUrl).execute(createPersonResult.personId);
-                                        }
-                                        if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
-                                            if (logFile != null) {
-                                                DataService dataService = new DataService();
-                                                dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
-                                                    @Override
-                                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
-                                                        if (response.isSuccessful()) {
-                                                            Log.d("deactivelog", response.body().message);
-                                                            progressBar.post(new Runnable() {
-                                                                @Override
-                                                                public void run() {
-                                                                    progressBar.setVisibility(View.INVISIBLE);
-                                                                }
-                                                            });
-                                                        }
-                                                    }
-
-                                                    @Override
-                                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                progressBar.setVisibility(View.INVISIBLE);
-                                                                tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                                                tv_error.setVisibility(View.VISIBLE);
-                                                            }
-                                                        });
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.INVISIBLE);
-                                        tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                        tv_error.setVisibility(View.VISIBLE);
-                                    }
-                                });
-                            }
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.setVisibility(View.INVISIBLE);
-                                    tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                    tv_error.setVisibility(View.VISIBLE);
-                                }
-                            });
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ResponseModel> call, Throwable t) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBar.setVisibility(View.INVISIBLE);
-                                tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                tv_error.setVisibility(View.VISIBLE);
-                            }
-                        });
-                    }
-                });
-
-
-            }
-        }
-    }
-
-    public class UpdatePerson extends AsyncTask<Void, Void, Boolean> {
-        private String personGroupId;
-        private String personId;
-        private String personName;
-        private String personDes;
-
-        private boolean isSuccess = true;
-
-        public UpdatePerson(String personGroupId, String personId, String personName, String personDes) {
-            this.personGroupId = personGroupId;
-            this.personId = personId;
-            this.personName = personName;
-            this.personDes = personDes;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setVisibility(View.VISIBLE);
-                }
-            });
-            FaceServiceClient client = Constants.getmFaceServiceClient();
-
-            try {
-                client.updatePerson(personGroupId, UUID.fromString(personId), personName, personDes);
-            } catch (ClientException e) {
-                e.printStackTrace();
-                isSuccess = false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                isSuccess = false;
-            }
-
-            return isSuccess;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean isSuccess) {
-            if (isSuccess) {
-                if (mImagePaths.size() > 0) {
-                    for (String imgUrl :
-                            mImagePaths) {
-                        File imageFile = new File(imgUrl);
-                        if (imageFile.exists()) {
-                            File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                            new Uploader(compressedImage, personId).execute();
-                        } else {
-                            new AddPersonFace(personGroupId, imgUrl).execute(UUID.fromString(personId));
-                        }
-                        if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
-                            if (logFile != null) {
-                                DataService dataService = new DataService();
-                                dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
-                                    @Override
-                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
-                                        if (response.isSuccessful()) {
-                                            Log.d("deactivelog", response.body().message);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
-
-                                    }
-                                });
-                                progressBar.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progressBar.setVisibility(View.INVISIBLE);
-                                    }
-                                });
-                            }
-                        }
-                    }
-                    progressBar.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.setVisibility(View.INVISIBLE);
-                        }
-                    });
-                }
-            }
-        }
-    }
-
     public class AddPersonFace extends AsyncTask<UUID, Void, AddPersistedFaceResult> {
         private String personGroupId;
         private String imgUrl;
+        private String personId;
 
-        public AddPersonFace(String personGroupId, String imgUrl) {
+        public AddPersonFace(String personGroupId, String imgUrl, String personId) {
             this.personGroupId = personGroupId;
             this.imgUrl = imgUrl;
+            this.personId = personId;
         }
 
         @Override
@@ -558,7 +612,18 @@ public class AddPersonActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(AddPersistedFaceResult addPersistedFaceResult) {
             if (addPersistedFaceResult != null) {
+                DataService services = new DataService();
+                services.AddPersonFace(addPersistedFaceResult.persistedFaceId.toString(), personId, imgUrl).enqueue(new Callback<ResponseModel>() {
+                    @Override
+                    public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
 
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseModel> call, Throwable t) {
+
+                    }
+                });
             }
         }
     }
@@ -627,7 +692,7 @@ public class AddPersonActivity extends AppCompatActivity {
         protected void onPostExecute(Map map) {
             if (map != null) {
                 String url = (String) map.get("url");
-                new AddPersonFace(PersonGroupId, url).execute(UUID.fromString(personId));
+                new AddPersonFace(PersonGroupId, url, personId).execute(UUID.fromString(personId));
             }
         }
     }

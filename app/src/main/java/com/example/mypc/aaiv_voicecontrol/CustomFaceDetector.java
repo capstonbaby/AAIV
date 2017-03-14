@@ -11,11 +11,15 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
@@ -29,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
@@ -40,8 +45,10 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.OBJECT_RECOGNITION_MO
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_VIE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_CONFIRMATION;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_RECOGNITION_CODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE;
 
 
@@ -54,6 +61,7 @@ public class CustomFaceDetector extends Detector<Face> {
     private int width = 0;
     private int heigh = 0;
     private byte[] arr = null;
+    private TextToSpeech mTextToSpeech;
 
     private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", "debwqzo2g",
@@ -61,10 +69,10 @@ public class CustomFaceDetector extends Detector<Face> {
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
 
 
-
     CustomFaceDetector(Detector<Face> delegate) {
         Log.i("STREAM", "create CustomFaceDector constructor");
         mDelegate = delegate;
+        SetUpText2Speech();
     }
 
     @Override
@@ -137,7 +145,7 @@ public class CustomFaceDetector extends Detector<Face> {
         Matrix matrix = new Matrix();
 
         matrix.postRotate(270);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(bm , 0, 0, bm .getWidth(), bm .getHeight(), matrix, true);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
 
         String root = Environment.getExternalStorageDirectory().toString();
         File myDir = new File(root + "/req_images");
@@ -226,8 +234,6 @@ public class CustomFaceDetector extends Detector<Face> {
 
                 new FaceIdentify(PersonGroupId).execute(faceids.toArray(new UUID[faceids.size()]));
 
-            } else {
-
             }
         }
     }
@@ -281,7 +287,6 @@ public class CustomFaceDetector extends Detector<Face> {
         protected Void doInBackground(Void... params) {
             Log.d("identify", "Person");
 
-
             final FaceServiceClient client = Constants.getmFaceServiceClient();
             try {
 
@@ -305,8 +310,46 @@ public class CustomFaceDetector extends Detector<Face> {
             super.onPostExecute(aVoid);
 
             Log.i("IDENTIFY", personIdentifyResultText);
-
+            Speak(personIdentifyResultText);
         }
 
+    }
+
+    private void Speak(String text) {
+        if (mTextToSpeech != null) {
+            mTextToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+    private void SetUpText2Speech() {
+        mTextToSpeech = new TextToSpeech(FaceTrackerActivity.getContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status != TextToSpeech.ERROR) {
+                    mTextToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String utteranceId) {
+
+                        }
+
+                        @Override
+                        public void onDone(String utteranceId) {
+
+                        }
+
+                        @Override
+                        public void onError(String utteranceId) {
+
+                        }
+                    });
+
+                    mTextToSpeech.setLanguage(new Locale("vi", "VN"));
+
+                    Log.d("setupt2s", "Setup finished");
+                } else if (status == TextToSpeech.ERROR) {
+                    Toast.makeText(FaceTrackerActivity.getContext(), "Setup Speech Failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }

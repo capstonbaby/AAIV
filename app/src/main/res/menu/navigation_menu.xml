@@ -6,11 +6,11 @@
         android:id="@+id/menu_personal"
         android:checkableBehavior="single">
         <item
-            android:id="@+id/setting"
-            android:title="Setting" />
+            android:id="@+id/people_in_group"
+            android:title="Người Thân" />
         <item
             android:id="@+id/logs"
-            android:title="Logs" />
+            android:title="Lịch Sử" />
         <item
             android:id="@+id/quota"
             android:title="Quota" />
@@ -19,7 +19,10 @@
         android:id="@+id/menu_navigation"
         android:checkableBehavior="single">
         <item
+            android:id="@+id/setting"
+            android:title="Thiết Lập" />
+        <item
             android:id="@+id/sign_out"
-            android:title="Sign out" />
+            android:title="Đăng xuất" />
     </group>
 </menu>

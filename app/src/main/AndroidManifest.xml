@@ -33,8 +33,6 @@
             android:name=".CloudiaryTest"
             android:label="@string/title_activity_cloudiary_test"
             android:theme="@style/AppTheme.NoActionBar" >
-
-
         </activity>
         <activity
             android:name="me.nereo.multi_image_selector.MultiImageSelectorActivity"
@@ -44,11 +42,6 @@
         <activity
             android:name=".StartUpActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
-            <!--<intent-filter>-->
-            <!--<action android:name="android.intent.action.MAIN" />-->
-
-            <!--<category android:name="android.intent.category.LAUNCHER" />-->
-            <!--</intent-filter>-->
         </activity>
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
@@ -59,18 +52,17 @@
         <activity
             android:name=".LoginActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
-
-        </activity>
-
-        <activity
-            android:name=".SignupActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"></activity>
-        <activity android:name=".FaceTrackerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".SignupActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"></activity>
+        <activity android:name=".FaceTrackerActivity">
+
         </activity>
     </application>
 

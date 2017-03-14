@@ -64,13 +64,7 @@ public class PersonServices {
         return personApi.getPersonById(personGroupid, personId);
     }
 
-    public Call<AddPersonFaceResponse> AddPersonFace(String personGroupId,String personId, String urlImage, String userData) {
-        Retrofit retrofit = getRetrofitFaceDetect();
 
-        PersonApi personApi = retrofit.create(PersonApi.class);
-
-        return personApi.addPersonFace(personGroupId, personId, userData, urlImage);
-    }
 
     public Call<List<PersonGroup>> GetPersonGroups() {
 
@@ -98,6 +92,13 @@ public class PersonServices {
         notificationHelper.createTrainingStatusNotification();
 
         return faceDetectApi.trainPersonGroup(personGroupId);
+    }
+
+    public Call<Void> UpdatePerson(String persongroupId, String personId, String personName, String personDes){
+        Retrofit retrofit = getRetrofitFaceDetect();
+        PersonApi personApi = retrofit.create(PersonApi.class);
+
+        return personApi.UpdatePerson(persongroupId, personId, personName, personDes);
     }
 
     public Retrofit getRetrofitFaceDetect() {
