@@ -9,10 +9,9 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
@@ -24,7 +23,6 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
@@ -41,20 +39,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+;
 import java.util.UUID;
-
-import static com.example.mypc.aaiv_voicecontrol.Constants.FACE_RECOGNITION_MODE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.OBJECT_RECOGNITION_MODE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
-import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_VIE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_CONFIRMATION;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
-import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_RECOGNITION_CODE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE;
+
 
 
 /**
@@ -68,9 +56,10 @@ public class CustomFaceDetector extends Detector<Face> {
     private int heigh = 0;
     private byte[] arr = null;
     private TextToSpeech mTextToSpeech;
-
     private TextView mtvResult;
     private ImageView mIvPreview;
+
+    private final MediaPlayer mp = MediaPlayer.create(FaceTrackerActivity.getContext(), R.raw.camerasound);
 
     private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", "debwqzo2g",
@@ -136,7 +125,11 @@ public class CustomFaceDetector extends Detector<Face> {
             yuvimage.compressToJpeg(new Rect(0, 0, width, heigh), 100, baos); // Where 100 is the quality of the generated jpeg
             byte[] jpegArray = baos.toByteArray();
             Bitmap bitmap = BitmapFactory.decodeByteArray(jpegArray, 0, jpegArray.length);
+            mp.start();
             savePicture(bitmap);
+            if(mp.isPlaying()){
+                mp.stop();
+            }
             return null;
         }
 
