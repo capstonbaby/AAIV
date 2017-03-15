@@ -59,7 +59,7 @@ public class CustomFaceDetector extends Detector<Face> {
     private TextView mtvResult;
     private ImageView mIvPreview;
 
-    private final MediaPlayer mp = MediaPlayer.create(FaceTrackerActivity.getContext(), R.raw.camerasound);
+    private MediaPlayer mp = null;
 
     private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", "debwqzo2g",
@@ -76,6 +76,7 @@ public class CustomFaceDetector extends Detector<Face> {
 
         mtvResult = (TextView) ((Activity)mContext).findViewById(R.id.tv_stream_result);
         mIvPreview = (ImageView) ((Activity)mContext).findViewById(R.id.iv_stream_preview);
+        mp = MediaPlayer.create(mContext, R.raw.camerasound);
     }
 
     @Override
@@ -89,9 +90,9 @@ public class CustomFaceDetector extends Detector<Face> {
             if (faces.size() > 0) {
                 try {
                     Log.i("STREAM", "faces size: " + faces.size());
-
-                    new test(frame).execute();
-                    Thread.sleep(5000);
+                    new playSound().execute();
+                    new Capture(frame).execute();
+                    Thread.sleep(3000);
 
                     Log.i("STREAM", "after sleep");
                 } catch (InterruptedException e) {
@@ -104,11 +105,26 @@ public class CustomFaceDetector extends Detector<Face> {
         return faces;
     }
 
-    public class test extends AsyncTask<Void, Void, Void> {
+    public class playSound extends AsyncTask<Void, Void, Void>{
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            mp.start();
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
+
+    public class Capture extends AsyncTask<Void, Void, Void> {
 
         private Frame frame;
 
-        public test(Frame frame) {
+        public Capture(Frame frame) {
             this.frame = frame;
         }
 
@@ -125,11 +141,7 @@ public class CustomFaceDetector extends Detector<Face> {
             yuvimage.compressToJpeg(new Rect(0, 0, width, heigh), 100, baos); // Where 100 is the quality of the generated jpeg
             byte[] jpegArray = baos.toByteArray();
             Bitmap bitmap = BitmapFactory.decodeByteArray(jpegArray, 0, jpegArray.length);
-            mp.start();
             savePicture(bitmap);
-            if(mp.isPlaying()){
-                mp.stop();
-            }
             return null;
         }
 
