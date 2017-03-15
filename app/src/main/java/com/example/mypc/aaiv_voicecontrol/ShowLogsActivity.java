@@ -84,7 +84,7 @@ public class ShowLogsActivity extends AppCompatActivity {
                             RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
                             mRecyclerView.setLayoutManager(layoutManager);
                             mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-                            mRecyclerView.addItemDecoration(new DividerItemDecoration(ShowLogsActivity.this, LinearLayoutManager.VERTICAL));
+                            //mRecyclerView.addItemDecoration(new DividerItemDecoration(ShowLogsActivity.this, LinearLayoutManager.VERTICAL));
                             mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
                                 @Override
                                 public void onClick(View view, int position) {

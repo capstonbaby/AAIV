@@ -8,6 +8,23 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true">
 
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="150dp"
+        android:layout_margin="5dp"
+        android:id="@+id/iv_stream_preview"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:id="@+id/tv_stream_result"
+        android:textSize="24sp"
+        android:textColor="#fff"
+        android:background="#7f000000"
+        tools:text="Something"/>
+
     <com.example.mypc.aaiv_voicecontrol.camera.CameraSourcePreview
         android:id="@+id/preview"
         android:layout_width="match_parent"

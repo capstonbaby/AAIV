@@ -1,15 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <TextView
+    <android.support.v7.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:id="@+id/tv_person_name"
-        android:textSize="24sp"
-        android:gravity="center_vertical"
-        tools:text="Something"/>
-</RelativeLayout>
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_margin="5dp"
+        android:elevation="3dp"
+        card_view:cardCornerRadius="1dp"
+        android:id="@+id/card_view">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/person_avatar"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_person_name"
+                android:layout_below="@id/person_avatar"
+                android:textSize="15sp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="10dp"
+                tools:text="Something"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_userData"
+                android:layout_below="@+id/tv_person_name"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="5dp"
+                android:textSize="12sp"
+                tools:text="title"/>
+
+            <ImageView
+                android:id="@+id/overflow"
+                android:layout_width="20dp"
+                android:layout_height="30dp"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/person_avatar"
+                android:layout_marginTop="10dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_dots" />
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+    
+
+</LinearLayout>

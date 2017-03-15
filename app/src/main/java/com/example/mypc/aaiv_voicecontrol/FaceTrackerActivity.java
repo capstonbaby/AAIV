@@ -16,6 +16,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.mypc.aaiv_voicecontrol.camera.CameraSourcePreview;
 import com.example.mypc.aaiv_voicecontrol.camera.GraphicOverlay;
@@ -38,6 +40,9 @@ public final class FaceTrackerActivity extends AppCompatActivity {
     private static final String TAG = "FaceTracker";
 
     private CameraSource mCameraSource = null;
+
+    private TextView mtvResult;
+    private ImageView mIvPreview;
 
     private CameraSourcePreview mPreview;
     private GraphicOverlay mGraphicOverlay;
@@ -68,6 +73,12 @@ public final class FaceTrackerActivity extends AppCompatActivity {
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
+
+        mtvResult = (TextView) findViewById(R.id.tv_stream_result);
+        mIvPreview = (ImageView) findViewById(R.id.iv_stream_preview);
+
+        mtvResult.bringToFront();
+        mIvPreview.bringToFront();
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -125,7 +136,7 @@ public final class FaceTrackerActivity extends AppCompatActivity {
 
         FaceDetector faceDetector = new FaceDetector.Builder(context)
                 .build();
-        CustomFaceDetector detector = new CustomFaceDetector(faceDetector);
+        CustomFaceDetector detector = new CustomFaceDetector(faceDetector, this);
         detector.setProcessor(
                 new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory())
                         .build());
@@ -147,10 +158,6 @@ public final class FaceTrackerActivity extends AppCompatActivity {
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedFps(30.0f)
                 .build();
-    }
-
-    public void takePicture(){
-
     }
 
     /**

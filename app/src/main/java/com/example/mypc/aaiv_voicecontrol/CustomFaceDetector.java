@@ -1,6 +1,8 @@
 package com.example.mypc.aaiv_voicecontrol;
 
 
+import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -15,8 +17,11 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.util.SparseArray;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
@@ -57,11 +62,15 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.VIEW_RECOGNITION_MODE
  */
 public class CustomFaceDetector extends Detector<Face> {
     private Detector<Face> mDelegate;
+    private Context mContext;
     private SparseArray<Face> faces = new SparseArray<>();
     private int width = 0;
     private int heigh = 0;
     private byte[] arr = null;
     private TextToSpeech mTextToSpeech;
+
+    private TextView mtvResult;
+    private ImageView mIvPreview;
 
     private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", "debwqzo2g",
@@ -69,10 +78,15 @@ public class CustomFaceDetector extends Detector<Face> {
             "api_secret", "qsuCuMnpTZ11_WxuIuQ5kPZmdr4"));
 
 
-    CustomFaceDetector(Detector<Face> delegate) {
+    CustomFaceDetector(Detector<Face> delegate, Context context) {
         Log.i("STREAM", "create CustomFaceDector constructor");
         mDelegate = delegate;
+        this.mContext = context;
+
         SetUpText2Speech();
+
+        mtvResult = (TextView) ((Activity)mContext).findViewById(R.id.tv_stream_result);
+        mIvPreview = (ImageView) ((Activity)mContext).findViewById(R.id.iv_stream_preview);
     }
 
     @Override
@@ -154,7 +168,7 @@ public class CustomFaceDetector extends Detector<Face> {
         int n = 10000;
         n = generator.nextInt(n);
         String fname = "Image-" + n + ".jpg";
-        File file = new File(myDir, fname);
+        final File file = new File(myDir, fname);
         Log.i("save picture", "" + file);
         if (file.exists())
             file.delete();
@@ -163,6 +177,15 @@ public class CustomFaceDetector extends Detector<Face> {
             rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
             out.close();
+
+            mIvPreview.post(new Runnable() {
+                @Override
+                public void run() {
+                    Glide.with(mContext)
+                            .load(file)
+                            .into(mIvPreview);
+                }
+            });
 
             new Uploader(file).execute();
         } catch (Exception e) {
@@ -229,6 +252,7 @@ public class CustomFaceDetector extends Detector<Face> {
             if (faces != null) {
                 List<UUID> faceids = new ArrayList<>();
                 for (com.microsoft.projectoxford.face.contract.Face face : faces) {
+
                     faceids.add(face.faceId);
                 }
 
@@ -309,7 +333,16 @@ public class CustomFaceDetector extends Detector<Face> {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
 
+
+
             Log.i("IDENTIFY", personIdentifyResultText);
+            mtvResult.post(new Runnable() {
+                @Override
+                public void run() {
+                    mtvResult.setText(personIdentifyResultText);
+                }
+            });
+
             Speak(personIdentifyResultText);
         }
 
