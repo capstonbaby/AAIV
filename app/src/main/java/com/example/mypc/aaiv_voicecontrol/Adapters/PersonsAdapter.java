@@ -46,9 +46,16 @@ public class PersonsAdapter extends RecyclerView.Adapter<PersonsAdapter.MyViewHo
         PersonModel person = mPersonList.get(position);
         holder.mTvPersonName.setText(person.name);
         holder.mTvUserData.setText(person.userData);
-        Glide.with(UpdatePersonActivity.getContext())
-                .load(person.faces.get(0).imageUrl)
-                .into(holder.mPersonAvatar);
+        if(person.faces.size() > 0){
+            Glide.with(UpdatePersonActivity.getContext())
+                    .load(person.faces.get(0).imageUrl)
+                    .into(holder.mPersonAvatar);
+        } else {
+            Glide.with(UpdatePersonActivity.getContext())
+                    .load(R.drawable.user)
+                    .into(holder.mPersonAvatar);
+        }
+
         holder.mOverflow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

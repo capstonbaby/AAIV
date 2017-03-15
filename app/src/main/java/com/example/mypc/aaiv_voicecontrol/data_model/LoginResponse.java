@@ -12,4 +12,5 @@ public class LoginResponse {
     public boolean success;
     public String message;
     public Data data;
+    public String error;
 }

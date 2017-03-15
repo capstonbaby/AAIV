@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -17,9 +18,12 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mypc.aaiv_voicecontrol.Adapters.LogAdapter;
 import com.example.mypc.aaiv_voicecontrol.Utils.DividerItemDecoration;
 import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
@@ -36,7 +40,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ShowLogsActivity extends AppCompatActivity {
+public class ShowLogsActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     private static Context context;
 
@@ -44,11 +48,14 @@ public class ShowLogsActivity extends AppCompatActivity {
         return context;
     }
 
+    private SessionManager session;
+
     private List<LogResponse> logList = new ArrayList<>();
     private RecyclerView mRecyclerView;
     private ProgressBar mProgressBar;
     private LogAdapter mLogAdapter;
     private TextView TvNoLog;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @BindView(R.id.drawer)
     DrawerLayout drawer;
@@ -70,7 +77,23 @@ public class ShowLogsActivity extends AppCompatActivity {
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_logs);
         TvNoLog = (TextView) findViewById(R.id.tv_no_log);
 
-        mProgressBar.setVisibility(View.VISIBLE);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setOnRefreshListener(this);
+        swipeRefreshLayout.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        swipeRefreshLayout.setRefreshing(true);
+
+                                        GetLogs();
+                                    }
+                                }
+        );
+
+        //mProgressBar.setVisibility(View.VISIBLE);
+
+    }
+
+    public void GetLogs() {
         final DataService dataService = new DataService();
         dataService.GetAllLogFromUser(Constants.getUserId()).enqueue(new Callback<List<LogResponse>>() {
             @Override
@@ -127,9 +150,12 @@ public class ShowLogsActivity extends AppCompatActivity {
                             }));
 
                             mRecyclerView.setAdapter(mLogAdapter);
+                            // stopping swipe refresh
+                            swipeRefreshLayout.setRefreshing(false);
                         }
                     } else {
-                        mProgressBar.setVisibility(View.INVISIBLE);
+                        // stopping swipe refresh
+                        swipeRefreshLayout.setRefreshing(false);
                         TvNoLog.setVisibility(View.VISIBLE);
                     }
 
@@ -138,7 +164,8 @@ public class ShowLogsActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<LogResponse>> call, Throwable t) {
-
+                // stopping swipe refresh
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
     }
@@ -154,28 +181,77 @@ public class ShowLogsActivity extends AppCompatActivity {
                 return true;
             }
         });
+        loadNavHeader();
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.open, R.string.close);
         drawer.addDrawerListener(actionBarDrawerToggle);
     }
+
+    public void loadNavHeader(){
+        View header = nvNavigation.getHeaderView(0);
+
+        ImageView mHeaderImage = (ImageView) header.findViewById(R.id.img_header_bg);
+        TextView mUserEmail = (TextView) header.findViewById(R.id.user_email);
+        ImageView mUserProfile = (ImageView) header.findViewById(R.id.img_profile);
+
+        //load header background
+        Glide.with(this)
+                .load(R.drawable.nav_menu_header_bg)
+                .crossFade()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mHeaderImage);
+
+        //load User Image
+        Glide.with(this)
+                .load(R.drawable.user_avatar)
+                .crossFade()
+                .thumbnail(0.5f)
+                .bitmapTransform(new CircleTransform(this))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mUserProfile);
+
+        mUserEmail.setText(Constants.getUsername());
+    }
+
     private void selectDrawerItem(MenuItem item) {
         int id = item.getItemId();
-        switch (id){
+        Intent intent;
+        switch (id) {
+            case R.id.nav_home:
+                intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                break;
             case R.id.setting:
-
+                intent = new Intent(this, StartUpActivity.class);
+                startActivity(intent);
                 break;
             case R.id.logs:
+                intent = new Intent(this, ShowLogsActivity.class);
+                startActivity(intent);
                 break;
             case R.id.quota:
                 break;
             case R.id.sign_out:
+                session.logoutUser();
+                break;
+            case R.id.people_in_group:
+                intent = new Intent(this, UpdatePersonActivity.class);
+                startActivity(intent);
+                break;
+            default:
                 break;
         }
         drawer.closeDrawers();
     }
+
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         actionBarDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onRefresh() {
+        GetLogs();
     }
 }

@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -23,9 +24,12 @@ import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mypc.aaiv_voicecontrol.Adapters.PersonsAdapter;
 import com.example.mypc.aaiv_voicecontrol.Utils.DividerItemDecoration;
 import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
@@ -51,7 +55,7 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 import static com.example.mypc.aaiv_voicecontrol.Constants.UPDATE_PERSON_MODE;
 
-public class UpdatePersonActivity extends AppCompatActivity {
+public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener{
 
     private static Context context;
 
@@ -66,6 +70,7 @@ public class UpdatePersonActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private LogResponse log;
     private TextView tvNoPerson;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @BindView(R.id.fabAdd)
     FloatingActionButton fabAdd;
@@ -87,8 +92,9 @@ public class UpdatePersonActivity extends AppCompatActivity {
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_persons);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_persons);
         tvNoPerson = (TextView) findViewById(R.id.tv_no_person);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
 
-        mProgressBar.setVisibility(View.VISIBLE);
+        //mProgressBar.setVisibility(View.VISIBLE);
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -106,6 +112,18 @@ public class UpdatePersonActivity extends AppCompatActivity {
         });
         initNavigation();
 
+        swipeRefreshLayout.setOnRefreshListener(this);
+        swipeRefreshLayout.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        swipeRefreshLayout.setRefreshing(true);
+                                        GetPeople();
+                                    }
+                                }
+        );
+    }
+
+    public void GetPeople(){
         DataService service = new DataService();
         service.GetPeopleInGroup(Constants.getPersonGroupId()).enqueue(new Callback<GetPersonInGroupModel>() {
             @Override
@@ -141,33 +159,18 @@ public class UpdatePersonActivity extends AppCompatActivity {
                             }));
 
                             mRecyclerView.setAdapter(mPersonsAdapter);
-                            mProgressBar.setVisibility(View.INVISIBLE);
+                            swipeRefreshLayout.setRefreshing(false);
                         } else {
-                            mProgressBar.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mProgressBar.setVisibility(View.INVISIBLE);
-                                }
-                            });
                             tvNoPerson.setVisibility(View.VISIBLE);
+                            swipeRefreshLayout.setRefreshing(false);
                         }
                     } else {
-                        mProgressBar.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mProgressBar.setVisibility(View.INVISIBLE);
-                            }
-                        });
+                        swipeRefreshLayout.setRefreshing(false);
                         tvNoPerson.setText("Error");
                         tvNoPerson.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    mProgressBar.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mProgressBar.setVisibility(View.INVISIBLE);
-                        }
-                    });
+                    swipeRefreshLayout.setRefreshing(false);
                     tvNoPerson.setText("Error");
                     tvNoPerson.setVisibility(View.VISIBLE);
                 }
@@ -175,18 +178,11 @@ public class UpdatePersonActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<GetPersonInGroupModel> call, Throwable t) {
-                mProgressBar.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgressBar.setVisibility(View.INVISIBLE);
-                    }
-                });
+                swipeRefreshLayout.setRefreshing(false);
                 tvNoPerson.setText("Error");
                 tvNoPerson.setVisibility(View.VISIBLE);
             }
         });
-
-
     }
 
     private void initNavigation() {
@@ -200,15 +196,46 @@ public class UpdatePersonActivity extends AppCompatActivity {
                 return true;
             }
         });
+        loadNavHeader();
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.open, R.string.close);
         drawer.addDrawerListener(actionBarDrawerToggle);
+    }
+
+    public void loadNavHeader(){
+        View header = nvNavigation.getHeaderView(0);
+
+        ImageView mHeaderImage = (ImageView) header.findViewById(R.id.img_header_bg);
+        TextView mUserEmail = (TextView) header.findViewById(R.id.user_email);
+        ImageView mUserProfile = (ImageView) header.findViewById(R.id.img_profile);
+
+        //load header background
+        Glide.with(this)
+                .load(R.drawable.nav_menu_header_bg)
+                .crossFade()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mHeaderImage);
+
+        //load User Image
+        Glide.with(this)
+                .load(R.drawable.user_avatar)
+                .crossFade()
+                .thumbnail(0.5f)
+                .bitmapTransform(new CircleTransform(this))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mUserProfile);
+
+        mUserEmail.setText(Constants.getUsername());
     }
 
     private void selectDrawerItem(MenuItem item) {
         int id = item.getItemId();
         Intent intent;
         switch (id) {
+            case R.id.nav_home:
+                intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                break;
             case R.id.setting:
                 intent = new Intent(this, StartUpActivity.class);
                 startActivity(intent);
@@ -236,6 +263,11 @@ public class UpdatePersonActivity extends AppCompatActivity {
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         actionBarDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onRefresh() {
+        GetPeople();
     }
 
     public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {

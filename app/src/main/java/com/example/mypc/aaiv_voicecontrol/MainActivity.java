@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
@@ -131,6 +132,9 @@ public class MainActivity extends AppCompatActivity {
     NavigationView nvNavigation;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
+
+
+
     private ActionBarDrawerToggle actionBarDrawerToggle;
 
     @Override
@@ -191,19 +195,48 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        View header = nvNavigation.getHeaderView(0);
-        TextView tvUsername = (TextView) header.findViewById(R.id.tvUsername);
-        tvUsername.setText(Constants.getUsername());
+
+        loadNavHeader();
 
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.open, R.string.close);
         drawer.addDrawerListener(actionBarDrawerToggle);
     }
 
+    public void loadNavHeader(){
+        View header = nvNavigation.getHeaderView(0);
+
+        ImageView mHeaderImage = (ImageView) header.findViewById(R.id.img_header_bg);
+        TextView mUserEmail = (TextView) header.findViewById(R.id.user_email);
+        ImageView mUserProfile = (ImageView) header.findViewById(R.id.img_profile);
+
+        //load header background
+        Glide.with(this)
+                .load(R.drawable.nav_menu_header_bg)
+                .crossFade()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mHeaderImage);
+
+        //load User Image
+        Glide.with(this)
+                .load(R.drawable.user_avatar)
+                .crossFade()
+                .thumbnail(0.5f)
+                .bitmapTransform(new CircleTransform(this))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mUserProfile);
+
+        mUserEmail.setText(Constants.getUsername());
+    }
+
     private void selectDrawerItem(MenuItem item) {
         int id = item.getItemId();
         Intent intent;
         switch (id) {
+            case R.id.nav_home:
+                intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                break;
             case R.id.setting:
                 intent = new Intent(this, StartUpActivity.class);
                 startActivity(intent);

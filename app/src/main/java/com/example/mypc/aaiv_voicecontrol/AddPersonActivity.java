@@ -25,6 +25,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.mypc.aaiv_voicecontrol.Adapters.GridViewAdapter;
@@ -66,6 +68,7 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 import static com.example.mypc.aaiv_voicecontrol.Constants.UPDATE_PERSON_MODE;
 
 public class AddPersonActivity extends AppCompatActivity {
+    private SessionManager session;
 
     private PersonModel updatePerson;
     private TextInputLayout txtPersonName;
@@ -306,7 +309,11 @@ public class AddPersonActivity extends AppCompatActivity {
                     if (log != null) {
                         logFile = log;
                         mImagePaths.add(logFile.imgUrl);
-
+                        for ( FaceModel face :
+                                updatePerson.faces) {
+                            mImagePaths.add(face.imageUrl);
+                        }
+                        gridAdapter.notifyDataSetChanged();
                         bt_cretePerson.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -348,6 +355,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                             public void onFailure(Call<MessageResponse> call, Throwable t) {
 
                                                                             }
+
                                                                         });
                                                                         progressBar.post(new Runnable() {
                                                                             @Override
@@ -511,22 +519,64 @@ public class AddPersonActivity extends AppCompatActivity {
                 return true;
             }
         });
+        loadNavHeader();
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.open, R.string.close);
         drawer.addDrawerListener(actionBarDrawerToggle);
     }
 
+    public void loadNavHeader(){
+        View header = nvNavigation.getHeaderView(0);
+
+        ImageView mHeaderImage = (ImageView) header.findViewById(R.id.img_header_bg);
+        TextView mUserEmail = (TextView) header.findViewById(R.id.user_email);
+        ImageView mUserProfile = (ImageView) header.findViewById(R.id.img_profile);
+
+        //load header background
+        Glide.with(this)
+                .load(R.drawable.nav_menu_header_bg)
+                .crossFade()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mHeaderImage);
+
+        //load User Image
+        Glide.with(this)
+                .load(R.drawable.user_avatar)
+                .crossFade()
+                .thumbnail(0.5f)
+                .bitmapTransform(new CircleTransform(this))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(mUserProfile);
+
+        mUserEmail.setText(Constants.getUsername());
+    }
+
     private void selectDrawerItem(MenuItem item) {
         int id = item.getItemId();
+        Intent intent;
         switch (id) {
+            case R.id.nav_home:
+                intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                break;
             case R.id.setting:
-
+                intent = new Intent(this, StartUpActivity.class);
+                startActivity(intent);
                 break;
             case R.id.logs:
+                intent = new Intent(this, ShowLogsActivity.class);
+                startActivity(intent);
                 break;
             case R.id.quota:
                 break;
             case R.id.sign_out:
+                session.logoutUser();
+                break;
+            case R.id.people_in_group:
+                intent = new Intent(this, UpdatePersonActivity.class);
+                startActivity(intent);
+                break;
+            default:
                 break;
         }
         drawer.closeDrawers();

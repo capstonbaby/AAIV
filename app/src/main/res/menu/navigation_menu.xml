@@ -6,13 +6,20 @@
         android:id="@+id/menu_personal"
         android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home_black_24dp"
+            android:title="Home" />
+        <item
             android:id="@+id/people_in_group"
+            android:icon="@drawable/ic_person_black_24dp"
             android:title="Người Thân" />
         <item
             android:id="@+id/logs"
+            android:icon="@drawable/ic_history_black_24dp"
             android:title="Lịch Sử" />
         <item
             android:id="@+id/quota"
+            android:icon="@drawable/ic_visibility_black_24dp"
             android:title="Quota" />
     </group>
     <group
@@ -20,9 +27,11 @@
         android:checkableBehavior="single">
         <item
             android:id="@+id/setting"
+            android:icon="@drawable/ic_settings_black_24dp"
             android:title="Thiết Lập" />
         <item
             android:id="@+id/sign_out"
+            android:icon="@drawable/ic_power_settings_new_black_24dp"
             android:title="Đăng xuất" />
     </group>
 </menu>
