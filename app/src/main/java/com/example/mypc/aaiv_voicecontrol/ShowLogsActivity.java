@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,16 +17,18 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mypc.aaiv_voicecontrol.Adapters.LogAdapter;
-import com.example.mypc.aaiv_voicecontrol.Utils.DividerItemDecoration;
 import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
@@ -253,5 +256,55 @@ public class ShowLogsActivity extends AppCompatActivity implements SwipeRefreshL
     @Override
     public void onRefresh() {
         GetLogs();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.change_ip: {
+                showInputDialog();
+                return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    protected void showInputDialog() {
+
+        // get prompts.xml view
+        LayoutInflater layoutInflater = LayoutInflater.from(ShowLogsActivity.this);
+        View promptView = layoutInflater.inflate(R.layout.ip_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ShowLogsActivity.this);
+        alertDialogBuilder.setView(promptView);
+
+        final TextInputLayout mTvIpAddress = (TextInputLayout) promptView.findViewById(R.id.input_layout_ip);
+        if(Constants.getApiHost() != null){
+            mTvIpAddress.getEditText().setText(Constants.getApiHost());
+        }
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(true)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Constants.setApiHost(mTvIpAddress.getEditText().getText().toString());
+                        Toast.makeText(ShowLogsActivity.this, Constants.getApiHost(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create an alert dialog
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
     }
 }

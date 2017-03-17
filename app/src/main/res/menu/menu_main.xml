@@ -2,21 +2,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.mypc.aaiv_voicecontrol.MainActivity">
-    <group
-        android:id="@+id/menu_personal"
-        android:checkableBehavior="single">
-        <item
-            android:id="@+id/your_profile"
-            android:title="Your Profile" />
-        <item
-            android:id="@+id/borrow_list"
-            android:title="Borrow List" />
-    </group>
-    <group
-        android:id="@+id/menu_navigation"
-        android:checkableBehavior="single">
-        <item
-            android:id="@+id/sign_out"
-            android:title="Sign out" />
-    </group>
+    <item
+        android:id="@+id/change_ip"
+        android:icon="@drawable/ic_dots"
+        android:title="Change IP address"
+        android:showAsAction="always"/>
 </menu>

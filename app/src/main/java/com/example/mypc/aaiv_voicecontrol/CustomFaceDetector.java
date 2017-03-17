@@ -41,8 +41,8 @@ import java.util.Map;
 import java.util.Random;
 ;
 import java.util.UUID;
-import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 
+import rx.internal.util.unsafe.ConcurrentSequencedCircularArrayQueue;
 
 
 /**
@@ -74,8 +74,8 @@ public class CustomFaceDetector extends Detector<Face> {
 
         SetUpText2Speech();
 
-        mtvResult = (TextView) ((Activity)mContext).findViewById(R.id.tv_stream_result);
-        mIvPreview = (ImageView) ((Activity)mContext).findViewById(R.id.iv_stream_preview);
+        mtvResult = (TextView) ((Activity) mContext).findViewById(R.id.tv_stream_result);
+        mIvPreview = (ImageView) ((Activity) mContext).findViewById(R.id.iv_stream_preview);
         mp = MediaPlayer.create(mContext, R.raw.camerasound);
     }
 
@@ -105,7 +105,7 @@ public class CustomFaceDetector extends Detector<Face> {
         return faces;
     }
 
-    public class playSound extends AsyncTask<Void, Void, Void>{
+    public class playSound extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... params) {
@@ -261,29 +261,31 @@ public class CustomFaceDetector extends Detector<Face> {
                     faceids.add(face.faceId);
                 }
 
-                new FaceIdentify(PersonGroupId).execute(faceids.toArray(new UUID[faceids.size()]));
+                new FaceIdentify(Constants.getPopularPersonGroupId(), faceids.toArray(new UUID[faceids.size()])).execute();
 
             }
         }
     }
 
-    private class FaceIdentify extends AsyncTask<UUID, Void, com.microsoft.projectoxford.face.contract.IdentifyResult[]> {
+    private class FaceIdentify extends AsyncTask<Void, Void, com.microsoft.projectoxford.face.contract.IdentifyResult[]> {
 
         String mPersonGroupId;
+        UUID[] mFaceIds;
 
-        public FaceIdentify(String mPersonGroupId) {
+        public FaceIdentify(String mPersonGroupId, UUID[] mFaceIds) {
             this.mPersonGroupId = mPersonGroupId;
+            this.mFaceIds = mFaceIds;
         }
 
         @Override
-        protected IdentifyResult[] doInBackground(UUID... params) {
+        protected IdentifyResult[] doInBackground(Void... params) {
             Log.d("identify", "Identifying");
 
             FaceServiceClient client = Constants.getmFaceServiceClient();
             try {
                 return client.identity(
                         this.mPersonGroupId,
-                        params,
+                        mFaceIds,
                         1
                 );
             } catch (ClientException e) {
@@ -298,7 +300,11 @@ public class CustomFaceDetector extends Detector<Face> {
         @Override
         protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
             if (identifyResults != null) {
-                new PersonInfo(identifyResults).execute();
+                new PersonInfo(mPersonGroupId, identifyResults).execute();
+            } else if (mPersonGroupId.equals(Constants.getPopularPersonGroupId())) {
+                new FaceIdentify(Constants.getNormalPersonGroupId(), mFaceIds).execute();
+            } else if (mPersonGroupId.equals(Constants.getNormalPersonGroupId())) {
+                new FaceIdentify(Constants.getFreshPersonGroupId(), mFaceIds).execute();
             }
         }
     }
@@ -306,9 +312,11 @@ public class CustomFaceDetector extends Detector<Face> {
     public class PersonInfo extends AsyncTask<Void, Void, Void> {
 
         String personIdentifyResultText = "";
+        String mPersonGroupId;
         IdentifyResult[] identifyResults;
 
-        public PersonInfo(IdentifyResult[] identifyResults) {
+        public PersonInfo(String mPersonGroupId, IdentifyResult[] identifyResults) {
+            this.mPersonGroupId = mPersonGroupId;
             this.identifyResults = identifyResults;
         }
 
@@ -322,7 +330,7 @@ public class CustomFaceDetector extends Detector<Face> {
                 for (final com.microsoft.projectoxford.face.contract.IdentifyResult identifyResult :
                         identifyResults) {
                     if (identifyResult.candidates.size() > 0) {
-                        final String personname = client.getPerson(PersonGroupId, identifyResult.candidates.get(0).personId).name;
+                        final String personname = client.getPerson(mPersonGroupId, identifyResult.candidates.get(0).personId).name;
                         personIdentifyResultText += personname + ", ";
                     }
                 }
@@ -337,7 +345,6 @@ public class CustomFaceDetector extends Detector<Face> {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-
 
 
             Log.i("IDENTIFY", personIdentifyResultText);

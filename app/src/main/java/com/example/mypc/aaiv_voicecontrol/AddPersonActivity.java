@@ -64,7 +64,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 import static com.example.mypc.aaiv_voicecontrol.Constants.UPDATE_PERSON_MODE;
 
 public class AddPersonActivity extends AppCompatActivity {
@@ -156,7 +155,7 @@ public class AddPersonActivity extends AppCompatActivity {
         if (bundle != null) {
             String mode = bundle.getString("mode");
             LogResponse log = (LogResponse) bundle.getParcelable("logFile");
-            PersonModel person = bundle.getParcelable("person");
+            final PersonModel person = bundle.getParcelable("person");
             switch (mode) {
                 case ADD_NEW_PERSON_MODE: {
                     if (log != null) {
@@ -180,17 +179,20 @@ public class AddPersonActivity extends AppCompatActivity {
                                 }
                             });
 
+                            //create person in Microsoft
                             services.CreatePerson(
                                     personName,
                                     personDes,
-                                    Constants.getPersonGroupId()
+                                    Constants.getFreshPersonGroupId()
                             ).enqueue(new Callback<AddPersonResponse>() {
                                 @Override
                                 public void onResponse(Call<AddPersonResponse> call, Response<AddPersonResponse> response) {
                                     if (response.isSuccessful()) {
                                         final String personId = response.body().getPersonId();
                                         DataService service = new DataService();
-                                        service.CreatePerson(Constants.getPersonGroupId(), personId, personName, personDes).enqueue(new Callback<ResponseModel>() {
+
+                                        //create person in DB
+                                        service.CreatePerson(Constants.getFreshPersonGroupId(), personId, personName, personDes).enqueue(new Callback<ResponseModel>() {
                                             @Override
                                             public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
                                                 if (response.isSuccessful()) {
@@ -201,9 +203,9 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 File imageFile = new File(imgUrl);
                                                                 if (imageFile.exists()) {
                                                                     File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                    new Uploader(compressedImage, personId).execute();
+                                                                    new Uploader(compressedImage, Constants.getFreshPersonGroupId(), personId).execute();
                                                                 } else {
-                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                    new AddPersonFace(Constants.getFreshPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
                                                                 }
                                                                 if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
                                                                     if (logFile != null) {
@@ -235,14 +237,9 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                             }
                                                                         });
                                                                     }
+                                                                    new TrainPersonGroup().execute(Constants.getFreshPersonGroupId());
                                                                 }
                                                             }
-                                                            runOnUiThread(new Runnable() {
-                                                                @Override
-                                                                public void run() {
-                                                                    progressBar.setVisibility(View.INVISIBLE);
-                                                                }
-                                                            });
                                                         }
                                                     } else {
                                                         runOnUiThread(new Runnable() {
@@ -324,7 +321,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                         progressBar.setVisibility(View.VISIBLE);
                                     }
                                 });
-                                services.UpdatePerson(personId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
+                                services.UpdatePerson(personId, person.personGroupId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
                                         .enqueue(new Callback<ResponseModel>() {
                                             @Override
                                             public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
@@ -336,9 +333,9 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 File imageFile = new File(imgUrl);
                                                                 if (imageFile.exists()) {
                                                                     File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                    new Uploader(compressedImage, personId).execute();
+                                                                    new Uploader(compressedImage, person.personGroupId, personId).execute();
                                                                 } else {
-                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                    new AddPersonFace(person.personGroupId, imgUrl, personId).execute(UUID.fromString(personId));
                                                                 }
                                                                 if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
                                                                     if (logFile != null) {
@@ -357,12 +354,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                             }
 
                                                                         });
-                                                                        progressBar.post(new Runnable() {
-                                                                            @Override
-                                                                            public void run() {
-                                                                                progressBar.setVisibility(View.INVISIBLE);
-                                                                            }
-                                                                        });
+                                                                        new TrainPersonGroup().execute(person.personGroupId);
                                                                     }
                                                                 }
                                                             }
@@ -424,7 +416,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                         progressBar.setVisibility(View.VISIBLE);
                                     }
                                 });
-                                services.UpdatePerson(personId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
+                                services.UpdatePerson(personId, person.personGroupId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
                                         .enqueue(new Callback<ResponseModel>() {
                                             @Override
                                             public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
@@ -436,9 +428,12 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 File imageFile = new File(imgUrl);
                                                                 if (imageFile.exists()) {
                                                                     File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                    new Uploader(compressedImage, personId).execute();
+                                                                    new Uploader(compressedImage, person.personGroupId, personId).execute();
                                                                 } else {
-                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                    new AddPersonFace(person.personGroupId, imgUrl, personId).execute(UUID.fromString(personId));
+                                                                }
+                                                                if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
+                                                                    new TrainPersonGroup().execute(person.personGroupId);
                                                                 }
                                                             }
                                                             progressBar.post(new Runnable() {
@@ -499,12 +494,12 @@ public class AddPersonActivity extends AppCompatActivity {
                         .start(AddPersonActivity.this, REQUEST_IMAGE);
             }
         });
-        bt_train.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new TrainPersonGroup().execute(PersonGroupId);
-            }
-        });
+//        bt_train.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                new TrainPersonGroup().execute(PersonGroupId);
+//            }
+//        });
         initDrawer();
     }
 
@@ -722,9 +717,11 @@ public class AddPersonActivity extends AppCompatActivity {
 
         private File compressedFile;
         private String personId;
+        private String personGroupId;
 
-        public Uploader(File compressedFile, String personId) {
+        public Uploader(File compressedFile, String personGroupId, String personId) {
             this.compressedFile = compressedFile;
+            this.personGroupId = personGroupId;
             this.personId = personId;
         }
 
@@ -742,16 +739,19 @@ public class AddPersonActivity extends AppCompatActivity {
         protected void onPostExecute(Map map) {
             if (map != null) {
                 String url = (String) map.get("url");
-                new AddPersonFace(PersonGroupId, url, personId).execute(UUID.fromString(personId));
+                new AddPersonFace(personGroupId, url, personId).execute(UUID.fromString(personId));
             }
         }
     }
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        Intent i = new Intent(AddPersonActivity.this, MainActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(i);
+        if(logFile != null){
+            Intent i = new Intent(AddPersonActivity.this, MainActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } else{
+            super.onBackPressed();
+        }
     }
 }

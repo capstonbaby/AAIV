@@ -1,5 +1,7 @@
 package com.example.mypc.aaiv_voicecontrol.data_model;
 
+import android.support.annotation.DimenRes;
+
 import java.util.List;
 
 import retrofit2.Call;
@@ -47,6 +49,10 @@ public interface DataApi {
 
     @FormUrlEncoded
     @POST("getpeopleingroup")
-    Call<GetPersonInGroupModel> GetPeopleInGroup(@Field("PersonGroupId") String personGroupId);
+    Call<GetPeopleModel> GetPeopleInGroup(@Field("PersonGroupId") String personGroupId);
+
+    @FormUrlEncoded
+    @POST("getpeopleofuser")
+    Call<GetPeopleModel> GetPeopleOfUser(@Field("userId") String userId);
 
 }

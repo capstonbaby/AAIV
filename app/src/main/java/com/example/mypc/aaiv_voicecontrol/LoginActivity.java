@@ -33,9 +33,6 @@ public class LoginActivity extends AppCompatActivity {
         Constants.setApiHost("192.168.1.99");
 
         sessionManager = new SessionManager(getApplicationContext());
-        Log.d("isLogin", sessionManager.isLoggedIn() ? "logged in" : "not logged in");
-        Log.d("isLogin", Constants.getPersonGroupId());
-        Log.d("isLogin", Constants.getUserId());
 
         if(sessionManager.isLoggedIn()){
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
@@ -73,11 +70,14 @@ public class LoginActivity extends AppCompatActivity {
                     public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                         if(response.isSuccessful()){
                             if(response.body().success){
-                                String personGroupId = response.body().data.personGroupId;
+                                String popularPersonGroupId = response.body().data.popular_personGroupId;
+                                String normalPersonGroupId = response.body().data.normal_personGroupId;
+                                String freshPersonGroupId = response.body().data.fresh_personGroupId;
                                 String userId = response.body().data.userId;
                                 String username = response.body().data.username;
 
-                                sessionManager.CreateLoginSession(personGroupId, userId, username);
+                                sessionManager.CreateLoginSession(popularPersonGroupId, normalPersonGroupId, freshPersonGroupId,
+                                                                    userId, username);
 
                                 pb_login.setVisibility(View.INVISIBLE);
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);

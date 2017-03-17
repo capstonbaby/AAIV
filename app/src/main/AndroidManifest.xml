@@ -22,18 +22,15 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar">
+
+        </activity>
         <activity
             android:name=".AddPersonActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".CameraActivity_2"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".CloudiaryTest"
-            android:label="@string/title_activity_cloudiary_test"
-            android:theme="@style/AppTheme.NoActionBar" >
-        </activity>
         <activity
             android:name="me.nereo.multi_image_selector.MultiImageSelectorActivity"
             android:configChanges="orientation|screenSize" />

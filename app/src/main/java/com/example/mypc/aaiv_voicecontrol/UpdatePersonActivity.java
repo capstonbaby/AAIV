@@ -1,47 +1,44 @@
 package com.example.mypc.aaiv_voicecontrol;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Rect;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mypc.aaiv_voicecontrol.Adapters.PersonsAdapter;
-import com.example.mypc.aaiv_voicecontrol.Utils.DividerItemDecoration;
 import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
-import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInGroupModel;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPeopleModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
-import com.microsoft.projectoxford.face.FaceServiceClient;
-import com.microsoft.projectoxford.face.contract.Person;
-import com.microsoft.projectoxford.face.rest.ClientException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +49,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import static com.example.mypc.aaiv_voicecontrol.Constants.ADD_NEW_PERSON_MODE;
-import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 import static com.example.mypc.aaiv_voicecontrol.Constants.UPDATE_PERSON_MODE;
 
 public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener{
@@ -94,8 +90,6 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
         tvNoPerson = (TextView) findViewById(R.id.tv_no_person);
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
 
-        //mProgressBar.setVisibility(View.VISIBLE);
-
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             log = (LogResponse) bundle.get("logfile");
@@ -124,16 +118,18 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
     }
 
     public void GetPeople(){
+        tvNoPerson.setVisibility(View.INVISIBLE);
+
         DataService service = new DataService();
-        service.GetPeopleInGroup(Constants.getPersonGroupId()).enqueue(new Callback<GetPersonInGroupModel>() {
+        service.GetPeopleOfuser(Constants.getUserId()).enqueue(new Callback<GetPeopleModel>() {
             @Override
-            public void onResponse(Call<GetPersonInGroupModel> call, Response<GetPersonInGroupModel> response) {
+            public void onResponse(Call<GetPeopleModel> call, Response<GetPeopleModel> response) {
                 if (response.isSuccessful()) {
-                    GetPersonInGroupModel getPersonInGroupModel = response.body();
+                    GetPeopleModel getPersonInGroupModel = response.body();
                     if (getPersonInGroupModel.success) {
                         if (getPersonInGroupModel.data.size() > 0) {
                             mPersonList = getPersonInGroupModel.data;
-                            mPersonsAdapter = new PersonsAdapter(mPersonList, getApplicationContext());
+                            mPersonsAdapter = new PersonsAdapter(mPersonList, UpdatePersonActivity.this);
                             RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getApplicationContext(), 2);
                             mRecyclerView.setLayoutManager(layoutManager);
                             mRecyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -177,7 +173,7 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
             }
 
             @Override
-            public void onFailure(Call<GetPersonInGroupModel> call, Throwable t) {
+            public void onFailure(Call<GetPeopleModel> call, Throwable t) {
                 swipeRefreshLayout.setRefreshing(false);
                 tvNoPerson.setText("Error");
                 tvNoPerson.setVisibility(View.VISIBLE);
@@ -311,5 +307,55 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
     private int dpToPx(int dp) {
         Resources r = getResources();
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.change_ip: {
+                showInputDialog();
+                return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    protected void showInputDialog() {
+
+        // get prompts.xml view
+        LayoutInflater layoutInflater = LayoutInflater.from(UpdatePersonActivity.this);
+        View promptView = layoutInflater.inflate(R.layout.ip_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(UpdatePersonActivity.this);
+        alertDialogBuilder.setView(promptView);
+
+        final TextInputLayout mTvIpAddress = (TextInputLayout) promptView.findViewById(R.id.input_layout_ip);
+        if(Constants.getApiHost() != null){
+            mTvIpAddress.getEditText().setText(Constants.getApiHost());
+        }
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(true)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Constants.setApiHost(mTvIpAddress.getEditText().getText().toString());
+                        Toast.makeText(UpdatePersonActivity.this, Constants.getApiHost(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create an alert dialog
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
     }
 }

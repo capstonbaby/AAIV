@@ -13,12 +13,15 @@ public class PersonModel implements Parcelable{
     public String name;
     public String userData;
     public String personid;
+    public String personGroupId;
     public List<FaceModel> faces = null;
+
 
     protected PersonModel(Parcel in) {
         name = in.readString();
         userData = in.readString();
         personid = in.readString();
+        personGroupId = in.readString();
         faces = in.createTypedArrayList(FaceModel.CREATOR);
     }
 
@@ -44,6 +47,7 @@ public class PersonModel implements Parcelable{
         dest.writeString(name);
         dest.writeString(userData);
         dest.writeString(personid);
+        dest.writeString(personGroupId);
         dest.writeTypedList(faces);
     }
 }

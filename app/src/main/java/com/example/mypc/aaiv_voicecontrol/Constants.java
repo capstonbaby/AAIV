@@ -69,8 +69,8 @@ public class Constants {
         return API_HOST + VISION_API;
     }
 
-    public  static  String getObjectAPIString(){
-        return  API_HOST + Object_API;
+    public static String getObjectAPIString() {
+        return API_HOST + Object_API;
     }
 
     public static String getFaceAPIString() {
@@ -191,16 +191,34 @@ public class Constants {
     public static final String ADD_NEW_PERSON_MODE = "new";
     public static final String UPDATE_PERSON_MODE = "update";
 
-    public static String PersonGroupId = "empty";
+    public static String PopularPersonGroupId = "";
+    public static String NormalPersonGroupId = "";
+    public static String FreshPersonGroupId = "";
     public static String UserId = "";
     public static String Username = "";
 
-    public static String getPersonGroupId() {
-        return PersonGroupId;
+    public static String getPopularPersonGroupId() {
+        return PopularPersonGroupId;
     }
 
-    public static void setPersonGroupId(String personGroupId) {
-        PersonGroupId = personGroupId;
+    public static void setPopularPersonGroupId(String popularPersonGroupId) {
+        PopularPersonGroupId = popularPersonGroupId;
+    }
+
+    public static String getNormalPersonGroupId() {
+        return NormalPersonGroupId;
+    }
+
+    public static void setNormalPersonGroupId(String normalPersonGroupId) {
+        NormalPersonGroupId = normalPersonGroupId;
+    }
+
+    public static String getFreshPersonGroupId() {
+        return FreshPersonGroupId;
+    }
+
+    public static void setFreshPersonGroupId(String freshPersonGroupId) {
+        FreshPersonGroupId = freshPersonGroupId;
     }
 
     public static String getUserId() {

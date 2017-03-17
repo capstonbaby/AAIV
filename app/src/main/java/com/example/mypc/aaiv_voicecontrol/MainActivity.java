@@ -6,11 +6,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
@@ -18,6 +18,7 @@ import android.speech.tts.UtteranceProgressListener;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -25,6 +26,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -44,6 +47,7 @@ import com.example.mypc.aaiv_voicecontrol.services.ObjectService;
 import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.contract.IdentifyResult;
 import com.microsoft.projectoxford.face.rest.ClientException;
 
 import java.io.File;
@@ -71,7 +75,6 @@ import static com.example.mypc.aaiv_voicecontrol.Constants.NEGATIVE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.OBJECT_RECOGNITION_MODE;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_FAILED;
 import static com.example.mypc.aaiv_voicecontrol.Constants.PERSON_DETECTED_SUCCESSFULLY;
-import static com.example.mypc.aaiv_voicecontrol.Constants.PersonGroupId;
 import static com.example.mypc.aaiv_voicecontrol.Constants.REPEAT;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SHOW_LOGS;
 import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_LANGUAGE_VIE;
@@ -109,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
     private ImageView iv_preview;
     private ImageButton mVoiceButton;
     private TextView mTvResult;
-    private EditText mTxtIp;
 
     private File returnCompressedImageFile;
 
@@ -122,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
 
     private TextToSpeech mTextToSpeech;
 
-    private int status;
     private String personDetectResultText = "";
     private String personIdentifyResultText = "";
 
@@ -132,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
     NavigationView nvNavigation;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
-
 
 
     private ActionBarDrawerToggle actionBarDrawerToggle;
@@ -151,7 +151,9 @@ public class MainActivity extends AppCompatActivity {
 
 
         HashMap<String, String> user = session.getUserDetails();
-        Constants.setPersonGroupId(user.get(session.KEY_PERSON_GROUP_ID));
+        Constants.setPopularPersonGroupId(user.get(session.KEY_POPULAR_PERSON_GROUP_ID));
+        Constants.setNormalPersonGroupId(user.get(session.KEY_NORMAL_PERSON_GROUP_ID));
+        Constants.setFreshPersonGroupId(user.get(session.KEY_FRESH_PERSON_GROUP_ID));
         Constants.setUserId(user.get(session.KEY_USER_ID));
         Constants.setUsername(user.get(session.KEY_USERNAME));
 
@@ -163,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
 
         iv_preview = (ImageView) findViewById(R.id.iv_preview);
         mTvResult = (TextView) findViewById(R.id.txtResult);
-        mTxtIp = (EditText) findViewById(R.id.et_ip);
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -203,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
         drawer.addDrawerListener(actionBarDrawerToggle);
     }
 
-    public void loadNavHeader(){
+    public void loadNavHeader() {
         View header = nvNavigation.getHeaderView(0);
 
         ImageView mHeaderImage = (ImageView) header.findViewById(R.id.img_header_bg);
@@ -276,10 +277,22 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    public void setIpAddress(View view) {
-        String ip = String.valueOf(mTxtIp.getText());
-        Constants.setApiHost(ip);
-        Toast.makeText(this, Constants.getApiHost(), Toast.LENGTH_LONG).show();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.change_ip: {
+                showInputDialog();
+                return true;
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private class Detector extends AsyncTask<Void, Void, Void> {
@@ -381,7 +394,7 @@ public class MainActivity extends AppCompatActivity {
                     faceids.add(face.faceId);
                 }
 
-                new FaceIdentify(PersonGroupId).execute(faceids.toArray(new UUID[faceids.size()]));
+                new FaceIdentify(Constants.getPopularPersonGroupId(), faceids.toArray(new UUID[faceids.size()])).execute();
 
                 if (faces.length == 1) {
                     personDetectResultText = "Có một người " + (faces[0].faceAttributes.gender.equals("male") ? "đàn ông" : "phụ nữ");
@@ -400,23 +413,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class FaceIdentify extends AsyncTask<UUID, Void, com.microsoft.projectoxford.face.contract.IdentifyResult[]> {
+    private class FaceIdentify extends AsyncTask<Void, Void, com.microsoft.projectoxford.face.contract.IdentifyResult[]> {
 
         String mPersonGroupId;
+        UUID[] mFaceIds;
 
-        public FaceIdentify(String mPersonGroupId) {
+        public FaceIdentify(String mPersonGroupId, UUID[] mFaceIds) {
             this.mPersonGroupId = mPersonGroupId;
+            this.mFaceIds = mFaceIds;
         }
 
         @Override
-        protected com.microsoft.projectoxford.face.contract.IdentifyResult[] doInBackground(UUID... params) {
+        protected com.microsoft.projectoxford.face.contract.IdentifyResult[] doInBackground(Void... params) {
             Log.d("identify", "Identifying");
 
             FaceServiceClient client = Constants.getmFaceServiceClient();
             try {
                 return client.identity(
                         this.mPersonGroupId,
-                        params,
+                        mFaceIds,
                         1
                 );
             } catch (ClientException e) {
@@ -431,7 +446,19 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
             if (identifyResults != null) {
-                new PersonInfo(identifyResults).execute();
+                new PersonInfo(identifyResults, mPersonGroupId).execute();
+            } else if (mPersonGroupId.equals(Constants.getPopularPersonGroupId())) {
+                new FaceIdentify(Constants.getNormalPersonGroupId(), mFaceIds).execute();
+            } else if (mPersonGroupId.equals(Constants.getNormalPersonGroupId())) {
+                new FaceIdentify(Constants.getFreshPersonGroupId(), mFaceIds).execute();
+            } else {
+                mTvResult.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTvResult.setText(personDetectResultText);
+                        Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
+                    }
+                });
             }
         }
     }
@@ -439,9 +466,11 @@ public class MainActivity extends AppCompatActivity {
     public class PersonInfo extends AsyncTask<Void, Void, Void> {
 
         com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults;
+        String personGroupId;
 
-        public PersonInfo(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
+        public PersonInfo(IdentifyResult[] identifyResults, String personGroupId) {
             this.identifyResults = identifyResults;
+            this.personGroupId = personGroupId;
         }
 
         @Override
@@ -449,17 +478,14 @@ public class MainActivity extends AppCompatActivity {
             Log.d("identify", "Person");
 
             final FaceServiceClient client = Constants.getmFaceServiceClient();
-            status = PERSON_DETECTED_FAILED;
 
             try {
 
                 for (final com.microsoft.projectoxford.face.contract.IdentifyResult identifyResult :
                         identifyResults) {
                     if (identifyResult.candidates.size() > 0) {
-                        final String personname = client.getPerson(PersonGroupId, identifyResult.candidates.get(0).personId).name;
+                        final String personname = client.getPerson(personGroupId, identifyResult.candidates.get(0).personId).name;
                         personIdentifyResultText += personname + ", ";
-
-                        status = PERSON_DETECTED_SUCCESSFULLY;
                     }
                 }
             } catch (ClientException e) {
@@ -473,42 +499,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-
-            switch (status) {
-                case PERSON_DETECTED_SUCCESSFULLY: {
-                    mTvResult.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mTvResult.setText(personIdentifyResultText);
-                            Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
-                        }
-                    });
-                    break;
+            mTvResult.post(new Runnable() {
+                @Override
+                public void run() {
+                    mTvResult.setText(personIdentifyResultText);
+                    Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
                 }
-                case PERSON_DETECTED_FAILED: {
-                    mTvResult.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mTvResult.setText(personDetectResultText);
-                            Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
-                        }
-                    });
-                    break;
-                }
-                default: {
-                    mTvResult.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mTvResult.setText("Nhận diện thất bại");
-                            Speak("Nhận diện thất bại", SPEECH_ONDONE_NOREQUEST);
-                        }
-                    });
-                    break;
-                }
-            }
-
+            });
         }
-
     }
 
     public class DetectObject extends AsyncTask<Void, Void, String> {
@@ -851,12 +849,59 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    protected void showInputDialog() {
+
+        // get prompts.xml view
+        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
+        View promptView = layoutInflater.inflate(R.layout.ip_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+        alertDialogBuilder.setView(promptView);
+
+        final TextInputLayout mTvIpAddress = (TextInputLayout) promptView.findViewById(R.id.input_layout_ip);
+        if (Constants.getApiHost() != null) {
+            mTvIpAddress.getEditText().setText(Constants.getApiHost());
+        }
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(true)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Constants.setApiHost(mTvIpAddress.getEditText().getText().toString());
+                        Toast.makeText(MainActivity.this, Constants.getApiHost(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create an alert dialog
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+    }
+
+    boolean doubleBackToExitPressedOnce = false;
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press BACK again to quit.", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
+    }
 }
-
-
-
-
-
-
-
-

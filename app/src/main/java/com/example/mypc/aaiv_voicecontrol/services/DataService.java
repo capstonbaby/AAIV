@@ -1,15 +1,13 @@
 package com.example.mypc.aaiv_voicecontrol.services;
 
 import com.example.mypc.aaiv_voicecontrol.Constants;
-import com.example.mypc.aaiv_voicecontrol.data_model.Data;
 import com.example.mypc.aaiv_voicecontrol.data_model.DataApi;
-import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInGroupModel;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPeopleModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LoginResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
 
-import java.net.DatagramPacket;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -66,11 +64,11 @@ public class DataService {
         return dataApi.CreatPerson(personGroupID, personId, personName, personDes);
     }
 
-    public Call<ResponseModel> UpdatePerson(String personId, String personName, String personDes){
+    public Call<ResponseModel> UpdatePerson(String personId, String personGroupId, String personName, String personDes){
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
-        return dataApi.UpdatePerson(Constants.getPersonGroupId(), personId, personName, personDes);
+        return dataApi.UpdatePerson(personGroupId, personId, personName, personDes);
     }
 
     public Call<ResponseModel> AddPersonFace(String persistedFaceId, String personId, String imgUrl){
@@ -80,11 +78,18 @@ public class DataService {
         return dataApi.AddPersonFace(persistedFaceId, personId, imgUrl);
     }
 
-    public Call<GetPersonInGroupModel> GetPeopleInGroup(String personGroupId){
+    public Call<GetPeopleModel> GetPeopleInGroup(String personGroupId){
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.GetPeopleInGroup(personGroupId);
+    }
+
+    public Call<GetPeopleModel> GetPeopleOfuser(String userId){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.GetPeopleOfUser(userId);
     }
 
     public Retrofit getRetrofitDataApi() {
