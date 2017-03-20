@@ -3,11 +3,13 @@ package com.example.mypc.aaiv_voicecontrol.services;
 import com.example.mypc.aaiv_voicecontrol.Constants;
 import com.example.mypc.aaiv_voicecontrol.data_model.DataApi;
 import com.example.mypc.aaiv_voicecontrol.data_model.GetPeopleModel;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInfoModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LoginResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
 
+import java.nio.channels.CancelledKeyException;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -22,74 +24,88 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataService {
 
-    public Call<MessageResponse> DeactiveLog(int logId){
+    public Call<MessageResponse> DeactiveLog(int logId) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.DeactiveLog(logId);
     }
 
-    public Call<MessageResponse> CreateLog(String ImageUrl, String name){
+    public Call<MessageResponse> CreateLog(String ImageUrl, String name) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.CreateLog(ImageUrl, name, Constants.getUserId());
     }
 
-    public Call<List<LogResponse>> GetAllLogFromUser(String userId){
+    public Call<List<LogResponse>> GetAllLogFromUser(String userId) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.GetAllLogFromUser(userId);
     }
 
-    public Call<LoginResponse> Login(String email, String password){
+    public Call<LoginResponse> Login(String email, String password) {
         Retrofit retrofit = getRetrofitAccountApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.Login(email, password);
     }
 
-    public Call<ResponseModel> Register(String email, String password, String confirmPassword){
+    public Call<ResponseModel> Register(String email, String password, String confirmPassword) {
         Retrofit retrofit = getRetrofitAccountApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.Register(email, password, confirmPassword);
     }
 
-    public Call<ResponseModel> CreatePerson(String personGroupID, String personId, String personName, String personDes){
+    public Call<ResponseModel> CreatePerson(String personGroupID, String personId, String personName, String personDes) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.CreatPerson(personGroupID, personId, personName, personDes);
     }
 
-    public Call<ResponseModel> UpdatePerson(String personId, String personGroupId, String personName, String personDes){
+    public Call<ResponseModel> UpdatePerson(String personId, String personGroupId, String personName, String personDes) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.UpdatePerson(personGroupId, personId, personName, personDes);
     }
 
-    public Call<ResponseModel> AddPersonFace(String persistedFaceId, String personId, String imgUrl){
+    public Call<ResponseModel> AddPersonFace(String persistedFaceId, String personId, String imgUrl) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.AddPersonFace(persistedFaceId, personId, imgUrl);
     }
 
-    public Call<GetPeopleModel> GetPeopleInGroup(String personGroupId){
+    public Call<GetPeopleModel> GetPeopleInGroup(String personGroupId) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.GetPeopleInGroup(personGroupId);
     }
 
-    public Call<GetPeopleModel> GetPeopleOfuser(String userId){
+    public Call<GetPeopleModel> GetPeopleOfuser(String userId) {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
         return dataApi.GetPeopleOfUser(userId);
+    }
+
+    public Call<ResponseModel> DeletePerson(String personId){
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.DeletePerson(personId);
+    }
+
+    public Call<GetPersonInfoModel> GetPersonInfo(List<String> personIds, String userId) {
+        Retrofit retrofit = getRetrofitDataApi();
+        DataApi dataApi = retrofit.create(DataApi.class);
+
+        return dataApi.GerPersonInfo(personIds, userId);
     }
 
     public Retrofit getRetrofitDataApi() {

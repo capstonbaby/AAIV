@@ -75,6 +75,7 @@ public class ShowLogsActivity extends AppCompatActivity implements SwipeRefreshL
         ButterKnife.bind(this);
         initDrawer();
         context = getApplicationContext();
+        setTitle("Lịch sử");
 
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_logs);
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_logs);

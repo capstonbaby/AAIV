@@ -18,11 +18,13 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -37,6 +39,8 @@ import com.example.mypc.aaiv_voicecontrol.Utils.RecyclerTouchListener;
 import com.example.mypc.aaiv_voicecontrol.data_model.GetPeopleModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.LogResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
+import com.example.mypc.aaiv_voicecontrol.data_model.ResponseModel;
+import com.example.mypc.aaiv_voicecontrol.person_model.Person;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 
 import java.util.ArrayList;
@@ -84,6 +88,7 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
         setContentView(R.layout.activity_update_person);
         ButterKnife.bind(this);
         context = getApplicationContext();
+        setTitle("Người thân");
 
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_persons);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_persons);
@@ -106,6 +111,72 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
         });
         initNavigation();
 
+        GetPeople();
+        mPersonsAdapter = new PersonsAdapter(mPersonList, UpdatePersonActivity.this);
+        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getApplicationContext(), 2);
+        mRecyclerView.setLayoutManager(layoutManager);
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
+        mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                PersonModel person = mPersonList.get(position);
+                Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
+                if (log != null) {
+                    intent.putExtra("logFile", log);
+                }
+                intent.putExtra("mode", UPDATE_PERSON_MODE);
+                intent.putExtra("person", person);
+
+                startActivity(intent);
+            }
+
+            @Override
+            public void onLongClick(View view, final int position) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(UpdatePersonActivity.this);
+
+                alertDialog.setTitle("Xóa");
+
+                alertDialog.setMessage("Bạn có chắc chắn muốn xóa người này");
+
+                alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, int which) {
+                        dialog.cancel();
+
+                        DataService service = new DataService();
+                        PersonModel person = mPersonList.get(position);
+                        swipeRefreshLayout.setRefreshing(true);
+                        service.DeletePerson(person.personid).enqueue(new Callback<ResponseModel>() {
+                            @Override
+                            public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
+                                if(response.isSuccessful()){
+                                    if(response.body().success){
+                                        GetPeople();
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<ResponseModel> call, Throwable t) {
+                                swipeRefreshLayout.setRefreshing(false);
+                                Toast.makeText(UpdatePersonActivity.this, "Xóa thất bại", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                });
+
+                alertDialog.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                alertDialog.show();
+            }
+        }));
+
+        mRecyclerView.setAdapter(mPersonsAdapter);
+
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.post(new Runnable() {
                                     @Override
@@ -125,38 +196,22 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
             @Override
             public void onResponse(Call<GetPeopleModel> call, Response<GetPeopleModel> response) {
                 if (response.isSuccessful()) {
-                    GetPeopleModel getPersonInGroupModel = response.body();
+                    final GetPeopleModel getPersonInGroupModel = response.body();
                     if (getPersonInGroupModel.success) {
                         if (getPersonInGroupModel.data.size() > 0) {
-                            mPersonList = getPersonInGroupModel.data;
-                            mPersonsAdapter = new PersonsAdapter(mPersonList, UpdatePersonActivity.this);
-                            RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getApplicationContext(), 2);
-                            mRecyclerView.setLayoutManager(layoutManager);
-                            mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-                            mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
-                            mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
+                            runOnUiThread(new Runnable() {
                                 @Override
-                                public void onClick(View view, int position) {
-                                    PersonModel person = mPersonList.get(position);
-                                    Intent intent = new Intent(UpdatePersonActivity.this, AddPersonActivity.class);
-                                    if (log != null) {
-                                        intent.putExtra("logFile", log);
-                                    }
-                                    intent.putExtra("mode", UPDATE_PERSON_MODE);
-                                    intent.putExtra("person", person);
-
-                                    startActivity(intent);
+                                public void run() {
+                                    mPersonList.clear();
+                                    mPersonList.addAll(getPersonInGroupModel.data);
+                                    mPersonsAdapter.notifyDataSetChanged();
+                                    swipeRefreshLayout.setRefreshing(false);
                                 }
-
-                                @Override
-                                public void onLongClick(View view, int position) {
-
-                                }
-                            }));
-
-                            mRecyclerView.setAdapter(mPersonsAdapter);
-                            swipeRefreshLayout.setRefreshing(false);
+                            });
                         } else {
+                            mPersonList.clear();
+                            mPersonsAdapter.notifyDataSetChanged();
+                            tvNoPerson.setText("Nhấn '+' để thêm người mới");
                             tvNoPerson.setVisibility(View.VISIBLE);
                             swipeRefreshLayout.setRefreshing(false);
                         }

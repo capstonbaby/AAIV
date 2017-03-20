@@ -428,7 +428,8 @@ public class Camera2Fragment extends Fragment
         view.setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
 
-//        mResult = (TextView) view.findViewById(R.id.txtResult);
+
+
         Bundle args = getArguments();
         capture_mode = args.getString("capture_mode");
     }

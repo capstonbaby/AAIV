@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -40,7 +42,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInfoModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
+import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.example.mypc.aaiv_voicecontrol.services.MainServices;
 import com.example.mypc.aaiv_voicecontrol.services.ObjectService;
@@ -93,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
         return i;
     }
 
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
+
     private static final int PERMISSION_CALLBACK_CONSTANT = 100;
     private static final int REQUEST_PERMISSION_SETTING = 101;
     String[] permissionsRequired = new String[]{Manifest.permission.CAMERA,
@@ -143,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
+        setTitle("AAIV");
 
         session = new SessionManager(getApplicationContext());
         Log.d("isLogin", session.isLoggedIn() ? "logged in" : "not logged in");
@@ -156,6 +165,21 @@ public class MainActivity extends AppCompatActivity {
         Constants.setFreshPersonGroupId(user.get(session.KEY_FRESH_PERSON_GROUP_ID));
         Constants.setUserId(user.get(session.KEY_USER_ID));
         Constants.setUsername(user.get(session.KEY_USERNAME));
+
+        //Shake Listener
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector();
+        mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
+
+            @Override
+            public void onShake(int count) {
+                if(count == 2){
+                    startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_VIE);
+                }
+            }
+        });
 
         initDrawer();
         SetUpText2Speech();
@@ -270,10 +294,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
     protected void onPause() {
+        mSensorManager.unregisterListener(mShakeDetector);
         super.onPause();
     }
 
@@ -432,6 +458,7 @@ public class MainActivity extends AppCompatActivity {
                 return client.identity(
                         this.mPersonGroupId,
                         mFaceIds,
+                        0.65f,
                         1
                 );
             } catch (ClientException e) {
@@ -446,7 +473,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
             if (identifyResults != null) {
-                new PersonInfo(identifyResults, mPersonGroupId).execute();
+                GetPersonInfo(identifyResults);
             } else if (mPersonGroupId.equals(Constants.getPopularPersonGroupId())) {
                 new FaceIdentify(Constants.getNormalPersonGroupId(), mFaceIds).execute();
             } else if (mPersonGroupId.equals(Constants.getNormalPersonGroupId())) {
@@ -456,9 +483,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         mTvResult.setText(personDetectResultText);
-                        Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
                     }
                 });
+                Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
             }
         }
     }
@@ -477,21 +504,10 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
             Log.d("identify", "Person");
 
-            final FaceServiceClient client = Constants.getmFaceServiceClient();
+            for (final com.microsoft.projectoxford.face.contract.IdentifyResult identifyResult :
+                    identifyResults) {
 
-            try {
 
-                for (final com.microsoft.projectoxford.face.contract.IdentifyResult identifyResult :
-                        identifyResults) {
-                    if (identifyResult.candidates.size() > 0) {
-                        final String personname = client.getPerson(personGroupId, identifyResult.candidates.get(0).personId).name;
-                        personIdentifyResultText += personname + ", ";
-                    }
-                }
-            } catch (ClientException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
             return null;
         }
@@ -507,6 +523,57 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    public void GetPersonInfo(IdentifyResult[] inIdentifyResults) {
+        DataService service = new DataService();
+        List<String> personIds = new ArrayList<>();
+        for (IdentifyResult identifyResult :
+                inIdentifyResults) {
+            if (identifyResult.candidates.size() > 0) {
+                personIds.add(identifyResult.candidates.get(0).personId.toString());
+            }
+        }
+
+        service.GetPersonInfo(personIds, Constants.getUserId()).enqueue(new Callback<GetPersonInfoModel>() {
+            @Override
+            public void onResponse(Call<GetPersonInfoModel> call, Response<GetPersonInfoModel> response) {
+                if (response.isSuccessful()) {
+                    if (response.body().success) {
+                        for (PersonModel person :
+                                response.body().data) {
+                            personIdentifyResultText += person.name + ". ";
+                        }
+                        mTvResult.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mTvResult.setText(personIdentifyResultText);
+                                Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
+                            }
+                        });
+                    } else {
+                        mTvResult.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mTvResult.setText(personDetectResultText);
+                                Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
+                            }
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<GetPersonInfoModel> call, Throwable t) {
+                mTvResult.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTvResult.setText(personDetectResultText);
+                        Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
+                    }
+                });
+            }
+        });
     }
 
     public class DetectObject extends AsyncTask<Void, Void, String> {
@@ -572,110 +639,96 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case SPEECH_RECOGNITION_CODE: {
-                if (resultCode == RESULT_OK && null != data) {
+        if (resultCode == RESULT_OK && null != data) {
+            switch (requestCode) {
+                case SPEECH_RECOGNITION_CODE: {
                     ArrayList<String> results = data
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
 
                     String text = results.get(0).toLowerCase();
-                    switch (text) {
-                        case FACE_RECOGNITION_MODE: {
-                            Intent intent = new Intent(this, CameraActivity_2.class);
-                            intent.putExtra("capture_mode", FACE_RECOGNITION_MODE);
-                            startActivity(intent);
-                            break;
+                    if (text.equals(Constants.getDetectPersonCommand().toLowerCase())) {
+                        Intent intent = new Intent(this, CameraActivity_2.class);
+                        intent.putExtra("capture_mode", FACE_RECOGNITION_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(Constants.getDetectObjectCommand().toLowerCase())) {
+                        Intent intent = new Intent(this, CameraActivity_2.class);
+                        intent.putExtra("capture_mode", OBJECT_RECOGNITION_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(Constants.getDetectViewCommand().toLowerCase())) {
+                        Intent intent = new Intent(this, CameraActivity_2.class);
+                        intent.putExtra("capture_mode", VIEW_RECOGNITION_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(Constants.getRepeatResultCommand().toLowerCase())) {
+                        if (personIdentifyResultText != "") {
+                            Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
+                        } else if (personDetectResultText != "") {
+                            Speak(personDetectResultText, SPEECH_ONDONE_NOREQUEST);
+                        } else {
+                            Speak("Không có", SPEECH_ONDONE_NOREQUEST);
                         }
-                        case OBJECT_RECOGNITION_MODE: {
-                            Intent intent = new Intent(this, CameraActivity_2.class);
-                            intent.putExtra("capture_mode", OBJECT_RECOGNITION_MODE);
-                            startActivity(intent);
-                            break;
-                        }
-                        case VIEW_RECOGNITION_MODE: {
-                            Intent intent = new Intent(this, CameraActivity_2.class);
-                            intent.putExtra("capture_mode", VIEW_RECOGNITION_MODE);
-                            startActivity(intent);
-                            break;
-                        }
-                        case REPEAT: {
-                            if (result != "") {
-                                mSpeechServices.sendGet(result, mTextToSpeech);
-                            }
-                            break;
-                        }
-                        case ADD_PERSON_VIEW: {
-                            Intent intent = new Intent(this, AddPersonActivity.class);
-                            intent.putExtra("mode", ADD_NEW_PERSON_MODE);
-                            startActivity(intent);
-                            break;
-                        }
-                        case AFFIRMATIVE: {
-                            startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
-                            break;
-                        }
-                        case CREATE_LOG_FILE: {
-                            startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
-                            break;
-                        }
-                        case NEGATIVE: {
-                            break;
-                        }
-                        case SHOW_LOGS: {
-                            Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
-                            startActivity(intent);
-
-                            break;
-                        }
-                        case STREAM_DETECT: {
-                            Intent intent = new Intent(this, FaceTrackerActivity.class);
-                            startActivity(intent);
-                            break;
-                        }
-                        default:
-                            Toast.makeText(this, "Không hỗ trợ: " + text, Toast.LENGTH_SHORT).show();
-                            break;
+                    } else if (text.equals(Constants.getNewPersonCommand().toLowerCase())) {
+                        Intent intent = new Intent(this, AddPersonActivity.class);
+                        intent.putExtra("mode", ADD_NEW_PERSON_MODE);
+                        startActivity(intent);
+                    } else if (text.equals(Constants.getAcceptCommand().toLowerCase())) {
+                        startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
+                    } else if (text.equals(CREATE_LOG_FILE)) {
+                        startSpeechToText("Hãy nói tên", SPEECH_PERSON_NAME_CODE, SPEECH_LANGUAGE_VIE);
+                    } else if (text.equals(Constants.getDenyCommand().toLowerCase())) {
+                    } else if (text.equals(Constants.getShowLogCommand().toLowerCase())) {
+                        Intent intent = new Intent(MainActivity.this, ShowLogsActivity.class);
+                        startActivity(intent);
+                    } else if (text.equals(Constants.getStreamDetectCommand().toLowerCase())) {
+                        Intent intent = new Intent(this, FaceTrackerActivity.class);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(this, "Không hỗ trợ: " + text, Toast.LENGTH_SHORT).show();
+                        Speak("Không hiểu lệnh", SPEECH_ONDONE_NOREQUEST);
                     }
+                    break;
                 }
-                break;
-            }
-            case SPEECH_PERSON_NAME_CODE: {
-                if (resultCode == RESULT_OK && null != data) {
-                    ArrayList<String> results = data
-                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                case SPEECH_PERSON_NAME_CODE: {
+                    if (resultCode == RESULT_OK && null != data) {
+                        ArrayList<String> results = data
+                                .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
 
-                    String text = results.get(0).toLowerCase();
-                    Log.d("name", text);
+                        String text = results.get(0).toLowerCase();
+                        Log.d("name", text);
 
-                    DataService dataService = new DataService();
-                    dataService.CreateLog(imgUrl, text).enqueue(new Callback<MessageResponse>() {
-                        @Override
-                        public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
-                            if (response.isSuccessful()) {
-                                if (response != null) {
-                                    Toast.makeText(MainActivity.this, "Log created at " + response.body().response.createdate, Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(MainActivity.this, "Create log failed", Toast.LENGTH_SHORT).show();
+                        DataService dataService = new DataService();
+                        dataService.CreateLog(imgUrl, text).enqueue(new Callback<MessageResponse>() {
+                            @Override
+                            public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                if (response.isSuccessful()) {
+                                    if (response != null) {
+                                        Toast.makeText(MainActivity.this, "Log created at " + response.body().response.createdate, Toast.LENGTH_SHORT).show();
+                                        Speak("Đã lưu", SPEECH_ONDONE_NOREQUEST);
+                                    } else {
+                                        Toast.makeText(MainActivity.this, "Create log failed", Toast.LENGTH_SHORT).show();
+                                        Speak("Chưa lưu được", SPEECH_ONDONE_NOREQUEST);
+                                    }
                                 }
                             }
-                        }
 
-                        @Override
-                        public void onFailure(Call<MessageResponse> call, Throwable t) {
-                            Log.d("createLog", "Create Log Fail");
-                            t.printStackTrace();
-                        }
-                    });
+                            @Override
+                            public void onFailure(Call<MessageResponse> call, Throwable t) {
+                                Log.d("createLog", "Create Log Fail");
+                                t.printStackTrace();
+                            }
+                        });
+                    }
+                    break;
                 }
-                break;
-            }
-            case REQUEST_PERMISSION_SETTING: {
-                if (ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[0]) == PackageManager.PERMISSION_GRANTED) {
+                case REQUEST_PERMISSION_SETTING: {
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, permissionsRequired[0]) == PackageManager.PERMISSION_GRANTED) {
 
+                    }
                 }
+                default:
+                    break;
             }
-            default:
-                break;
+        } else {
+            Speak("Không hiểu lệnh", SPEECH_ONDONE_NOREQUEST);
         }
     }
 
@@ -900,7 +953,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void run() {
-                doubleBackToExitPressedOnce=false;
+                doubleBackToExitPressedOnce = false;
             }
         }, 2000);
     }

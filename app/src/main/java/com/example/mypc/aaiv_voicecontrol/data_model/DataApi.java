@@ -55,4 +55,12 @@ public interface DataApi {
     @POST("getpeopleofuser")
     Call<GetPeopleModel> GetPeopleOfUser(@Field("userId") String userId);
 
+    @FormUrlEncoded
+    @POST("getpersoninfo")
+    Call<GetPersonInfoModel> GerPersonInfo(@Field("personIds") List<String> personIds, @Field("userId") String userId);
+
+    @FormUrlEncoded
+    @POST("deleteperson")
+    Call<ResponseModel> DeletePerson(@Field("personId") String personId);
+
 }

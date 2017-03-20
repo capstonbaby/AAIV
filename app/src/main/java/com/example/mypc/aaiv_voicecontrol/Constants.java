@@ -25,36 +25,17 @@ public class Constants {
     public static final String ACCOUNT_API = "account/";
     public static final String Object_API = "api/object/";
 
-    //Command
-//    private static String SHOOTING_COMMAND;
-//    private static String DETECT_PERSON_COMMAND;
-//    private static String DETECT_OBJECT_COMMAND;
-//    private static String DETECT_VIEW_COMMAND;
-//    private static String REPEAT_RESULT_COMMAND;
-//    private static String NEW_PERSON_COMMAND;
-//    private static String ACCEPT_COMMAND;
-//    private static String DENY_COMMAND;
-//    private static String SHOW_LOG_COMMAND;
 
     private static String SHOOTING_COMMAND = "Chụp";
     private static String DETECT_PERSON_COMMAND = "Ai đó";
     private static String DETECT_OBJECT_COMMAND = "Cái gì đó";
     private static String DETECT_VIEW_COMMAND = "Cảnh gì đó";
-    private static String REPEAT_RESULT_COMMAND = "lặp lại";
-    private static String NEW_PERSON_COMMAND = "thêm mới";
+    private static String REPEAT_RESULT_COMMAND = "nhắc lại";
+    private static String NEW_PERSON_COMMAND = "thêm người mới";
     private static String ACCEPT_COMMAND = "Đồng ý";
     private static String DENY_COMMAND = "Hủy";
     private static String SHOW_LOG_COMMAND = "lịch sử";
-
-//    public static String SHOOTING_COMMAND;
-//    public static String DETECT_PERSON_COMMAND = "người";
-//    public static String DETECT_OBJECT_COMMAND = "vật";
-//    public static String DETECT_VIEW_COMMAND = "miêu tả";
-//    public static String REPEAT_RESULT_COMMAND = "nhắc lại";
-//    public static String NEW_PERSON_COMMAND= "thêm người";
-//    public static String ACCEPT_COMMAND = "có";
-//    public static String DENY_COMMAND = "không";
-//    public static String SHOW_LOG_COMMAND = "lịch sử";
+    private static String STREAM_DETECT_COMMAND = "quay";
 
 
     public static void setApiHost(String hostApi) {
@@ -165,6 +146,14 @@ public class Constants {
         return SHOW_LOG_COMMAND;
     }
 
+    public static String getStreamDetectCommand() {
+        return STREAM_DETECT_COMMAND;
+    }
+
+    public static void setStreamDetectCommand(String streamDetectCommand) {
+        STREAM_DETECT_COMMAND = streamDetectCommand;
+    }
+
     public static final int SPEECH_RECOGNITION_CODE = 1;
     public static final String FACE_RECOGNITION_MODE = "người";
     public static final String OBJECT_RECOGNITION_MODE = "đồ vật";
@@ -173,7 +162,7 @@ public class Constants {
     public static final String ADD_PERSON_VIEW = "thêm người";
     public static final String AFFIRMATIVE = "có";
     public static final String NEGATIVE = "không";
-    public static final String CREATE_LOG_FILE = "lưu người này";
+    public static final String CREATE_LOG_FILE = "lưu lại";
     public static final String SHOW_LOGS = "lịch sử";
     public static final String STREAM_DETECT = "quay";
 

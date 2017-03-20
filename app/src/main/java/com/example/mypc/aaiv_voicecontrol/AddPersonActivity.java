@@ -1,6 +1,7 @@
 package com.example.mypc.aaiv_voicecontrol;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -24,6 +25,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -158,6 +160,7 @@ public class AddPersonActivity extends AppCompatActivity {
             final PersonModel person = bundle.getParcelable("person");
             switch (mode) {
                 case ADD_NEW_PERSON_MODE: {
+                    setTitle("Người mới");
                     if (log != null) {
                         logFile = log;
                         txtPersonName.getEditText().setText(logFile.name);
@@ -179,7 +182,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                 }
                             });
 
-                            //create person in Microsoft
+                            //create person in MS
                             services.CreatePerson(
                                     personName,
                                     personDes,
@@ -192,56 +195,80 @@ public class AddPersonActivity extends AppCompatActivity {
                                         DataService service = new DataService();
 
                                         //create person in DB
-                                        service.CreatePerson(Constants.getFreshPersonGroupId(), personId, personName, personDes).enqueue(new Callback<ResponseModel>() {
-                                            @Override
-                                            public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
-                                                if (response.isSuccessful()) {
-                                                    if (response.body().success) {
-                                                        if (mImagePaths.size() > 0) {
-                                                            for (String imgUrl :
-                                                                    mImagePaths) {
-                                                                File imageFile = new File(imgUrl);
-                                                                if (imageFile.exists()) {
-                                                                    File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                    new Uploader(compressedImage, Constants.getFreshPersonGroupId(), personId).execute();
-                                                                } else {
-                                                                    new AddPersonFace(Constants.getFreshPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
-                                                                }
-                                                                if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
-                                                                    if (logFile != null) {
-                                                                        DataService dataService = new DataService();
-                                                                        dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
-                                                                            @Override
-                                                                            public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
-                                                                                if (response.isSuccessful()) {
-                                                                                    Log.d("deactivelog", response.body().message);
-                                                                                    progressBar.post(new Runnable() {
-                                                                                        @Override
-                                                                                        public void run() {
-                                                                                            progressBar.setVisibility(View.INVISIBLE);
-                                                                                        }
-                                                                                    });
-                                                                                }
-                                                                            }
-
-                                                                            @Override
-                                                                            public void onFailure(Call<MessageResponse> call, Throwable t) {
-                                                                                runOnUiThread(new Runnable() {
+                                        service.CreatePerson(Constants.getFreshPersonGroupId(), personId, personName, personDes)
+                                                .enqueue(new Callback<ResponseModel>() {
+                                                    @Override
+                                                    public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
+                                                        if (response.isSuccessful()) {
+                                                            if (response.body().success) {
+                                                                if (mImagePaths.size() > 0) {
+                                                                    for (String imgUrl :
+                                                                            mImagePaths) {
+                                                                        File imageFile = new File(imgUrl);
+                                                                        if (imageFile.exists()) {
+                                                                            File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
+                                                                            new Uploader(compressedImage, Constants.getFreshPersonGroupId(), personId).execute();
+                                                                        } else {
+                                                                            new AddPersonFace(Constants.getFreshPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                        }
+                                                                        if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
+                                                                            if (logFile != null) {
+                                                                                DataService dataService = new DataService();
+                                                                                dataService.DeactiveLog(logFile.id).enqueue(new Callback<MessageResponse>() {
                                                                                     @Override
-                                                                                    public void run() {
-                                                                                        progressBar.setVisibility(View.INVISIBLE);
-                                                                                        tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                                                                        tv_error.setVisibility(View.VISIBLE);
+                                                                                    public void onResponse(Call<MessageResponse> call, Response<MessageResponse> response) {
+                                                                                        if (response.isSuccessful()) {
+                                                                                            Log.d("deactivelog", response.body().message);
+                                                                                        }
+                                                                                    }
+
+                                                                                    @Override
+                                                                                    public void onFailure(Call<MessageResponse> call, Throwable t) {
+                                                                                        runOnUiThread(new Runnable() {
+                                                                                            @Override
+                                                                                            public void run() {
+                                                                                                progressBar.setVisibility(View.INVISIBLE);
+                                                                                                tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                                                                tv_error.setVisibility(View.VISIBLE);
+                                                                                            }
+                                                                                        });
                                                                                     }
                                                                                 });
+                                                                                new TrainPersonGroup().execute(Constants.getFreshPersonGroupId());
                                                                             }
-                                                                        });
+                                                                        }
                                                                     }
-                                                                    new TrainPersonGroup().execute(Constants.getFreshPersonGroupId());
+                                                                } else {
+
+                                                                    progressBar.post(new Runnable() {
+                                                                        @Override
+                                                                        public void run() {
+                                                                            progressBar.setVisibility(View.INVISIBLE);
+                                                                        }
+                                                                    });
                                                                 }
+                                                            } else {
+                                                                runOnUiThread(new Runnable() {
+                                                                    @Override
+                                                                    public void run() {
+                                                                        progressBar.setVisibility(View.INVISIBLE);
+                                                                    }
+                                                                });
                                                             }
+                                                        } else {
+                                                            runOnUiThread(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    progressBar.setVisibility(View.INVISIBLE);
+                                                                    tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
+                                                                    tv_error.setVisibility(View.VISIBLE);
+                                                                }
+                                                            });
                                                         }
-                                                    } else {
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(Call<ResponseModel> call, Throwable t) {
                                                         runOnUiThread(new Runnable() {
                                                             @Override
                                                             public void run() {
@@ -251,30 +278,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                             }
                                                         });
                                                     }
-                                                } else {
-                                                    runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            progressBar.setVisibility(View.INVISIBLE);
-                                                            tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                                            tv_error.setVisibility(View.VISIBLE);
-                                                        }
-                                                    });
-                                                }
-                                            }
-
-                                            @Override
-                                            public void onFailure(Call<ResponseModel> call, Throwable t) {
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        progressBar.setVisibility(View.INVISIBLE);
-                                                        tv_error.setText("Đã có lỗi xảy ra, vui lòng thử lại sau");
-                                                        tv_error.setVisibility(View.VISIBLE);
-                                                    }
                                                 });
-                                            }
-                                        });
                                     }
                                 }
 
@@ -295,6 +299,7 @@ public class AddPersonActivity extends AppCompatActivity {
                     break;
                 }
                 case UPDATE_PERSON_MODE: {
+                    setTitle("Cập nhật");
                     final String personId = person.personid;
                     txtPersonName.getEditText().setText(person.name);
                     txtPersonDes.getEditText().setText(person.userData);
@@ -306,7 +311,7 @@ public class AddPersonActivity extends AppCompatActivity {
                     if (log != null) {
                         logFile = log;
                         mImagePaths.add(logFile.imgUrl);
-                        for ( FaceModel face :
+                        for (FaceModel face :
                                 updatePerson.faces) {
                             mImagePaths.add(face.imageUrl);
                         }
@@ -358,6 +363,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                     }
                                                                 }
                                                             }
+                                                        } else {
                                                             progressBar.post(new Runnable() {
                                                                 @Override
                                                                 public void run() {
@@ -365,6 +371,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 }
                                                             });
                                                         }
+                                                    } else {
                                                         progressBar.post(new Runnable() {
                                                             @Override
                                                             public void run() {
@@ -372,6 +379,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                             }
                                                         });
                                                     }
+                                                } else {
                                                     progressBar.post(new Runnable() {
                                                         @Override
                                                         public void run() {
@@ -379,12 +387,6 @@ public class AddPersonActivity extends AppCompatActivity {
                                                         }
                                                     });
                                                 }
-                                                progressBar.post(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        progressBar.setVisibility(View.INVISIBLE);
-                                                    }
-                                                });
                                             }
 
                                             @Override
@@ -401,7 +403,7 @@ public class AddPersonActivity extends AppCompatActivity {
                             }
                         });
                     } else {
-                        for ( FaceModel face :
+                        for (FaceModel face :
                                 updatePerson.faces) {
                             mImagePaths.add(face.imageUrl);
                         }
@@ -436,6 +438,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                     new TrainPersonGroup().execute(person.personGroupId);
                                                                 }
                                                             }
+                                                        } else {
                                                             progressBar.post(new Runnable() {
                                                                 @Override
                                                                 public void run() {
@@ -443,6 +446,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 }
                                                             });
                                                         }
+                                                    } else {
                                                         progressBar.post(new Runnable() {
                                                             @Override
                                                             public void run() {
@@ -450,6 +454,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                             }
                                                         });
                                                     }
+                                                } else {
                                                     progressBar.post(new Runnable() {
                                                         @Override
                                                         public void run() {
@@ -457,12 +462,6 @@ public class AddPersonActivity extends AppCompatActivity {
                                                         }
                                                     });
                                                 }
-                                                progressBar.post(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        progressBar.setVisibility(View.INVISIBLE);
-                                                    }
-                                                });
                                             }
 
                                             @Override
@@ -482,6 +481,16 @@ public class AddPersonActivity extends AppCompatActivity {
                     break;
                 }
             }
+            bt_train.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(person != null){
+                        new TrainPersonGroup().execute(person.personGroupId);
+                    }else {
+                        new TrainPersonGroup().execute(Constants.getFreshPersonGroupId());
+                    }
+                }
+            });
         }
 
         ivAdd.setOnClickListener(new View.OnClickListener() {
@@ -494,12 +503,7 @@ public class AddPersonActivity extends AppCompatActivity {
                         .start(AddPersonActivity.this, REQUEST_IMAGE);
             }
         });
-//        bt_train.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                new TrainPersonGroup().execute(PersonGroupId);
-//            }
-//        });
+
         initDrawer();
     }
 
@@ -520,7 +524,7 @@ public class AddPersonActivity extends AppCompatActivity {
         drawer.addDrawerListener(actionBarDrawerToggle);
     }
 
-    public void loadNavHeader(){
+    public void loadNavHeader() {
         View header = nvNavigation.getHeaderView(0);
 
         ImageView mHeaderImage = (ImageView) header.findViewById(R.id.img_header_bg);
@@ -669,6 +673,24 @@ public class AddPersonActivity extends AppCompatActivity {
 
                     }
                 });
+            } else {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(AddPersonActivity.this);
+
+                // Setting Dialog Title
+                //alertDialog.setTitle("Alert Dialog");
+
+                // Setting Dialog Message
+                alertDialog.setMessage("Một hoặc nhiều hình ảnh của bạn có thể không chứa khuôn mặt. Bạn nên kiểm tra lại.");
+
+                // Setting OK Button
+                alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                // Showing Alert Message
+                alertDialog.show();
             }
         }
     }
@@ -679,12 +701,14 @@ public class AddPersonActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(String... params) {
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.setVisibility(View.VISIBLE);
-                }
-            });
+//            progressBar.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    progressBar.setVisibility(View.VISIBLE);
+//                }
+//            });
+
+            Log.d("Identify", "Traine group: " + params[0]);
             FaceServiceClient client = Constants.getmFaceServiceClient();
 
             try {
@@ -746,11 +770,11 @@ public class AddPersonActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(logFile != null){
+        if (logFile != null) {
             Intent i = new Intent(AddPersonActivity.this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
-        } else{
+        } else {
             super.onBackPressed();
         }
     }

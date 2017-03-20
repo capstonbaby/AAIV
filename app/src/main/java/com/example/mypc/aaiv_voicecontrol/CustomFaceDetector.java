@@ -23,6 +23,9 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInfoModel;
+import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
+import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
@@ -42,7 +45,12 @@ import java.util.Random;
 ;
 import java.util.UUID;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import rx.internal.util.unsafe.ConcurrentSequencedCircularArrayQueue;
+
+import static com.example.mypc.aaiv_voicecontrol.Constants.SPEECH_ONDONE_NOREQUEST;
 
 
 /**
@@ -58,6 +66,8 @@ public class CustomFaceDetector extends Detector<Face> {
     private TextToSpeech mTextToSpeech;
     private TextView mtvResult;
     private ImageView mIvPreview;
+    private String personIdentifyResultText = "";
+
 
     private MediaPlayer mp = null;
 
@@ -300,7 +310,7 @@ public class CustomFaceDetector extends Detector<Face> {
         @Override
         protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
             if (identifyResults != null) {
-                new PersonInfo(mPersonGroupId, identifyResults).execute();
+                GetPersonInfo(identifyResults);
             } else if (mPersonGroupId.equals(Constants.getPopularPersonGroupId())) {
                 new FaceIdentify(Constants.getNormalPersonGroupId(), mFaceIds).execute();
             } else if (mPersonGroupId.equals(Constants.getNormalPersonGroupId())) {
@@ -358,6 +368,47 @@ public class CustomFaceDetector extends Detector<Face> {
             Speak(personIdentifyResultText);
         }
 
+    }
+
+    public void GetPersonInfo(IdentifyResult[] inIdentifyResults) {
+        DataService service = new DataService();
+        List<String> personIds = new ArrayList<>();
+        for (IdentifyResult identifyResult :
+                inIdentifyResults) {
+            if (identifyResult.candidates.size() > 0) {
+                personIds.add(identifyResult.candidates.get(0).personId.toString());
+            }
+        }
+
+        service.GetPersonInfo(personIds, Constants.getUserId()).enqueue(new Callback<GetPersonInfoModel>() {
+            @Override
+            public void onResponse(Call<GetPersonInfoModel> call, Response<GetPersonInfoModel> response) {
+                if (response.isSuccessful()) {
+                    if (response.body().success) {
+                        for (PersonModel person :
+                                response.body().data) {
+                            personIdentifyResultText += person.name + ". ";
+                        }
+                        Log.i("IDENTIFY", personIdentifyResultText);
+                        mtvResult.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mtvResult.setText(personIdentifyResultText);
+                            }
+                        });
+
+                        Speak(personIdentifyResultText);
+                    } else {
+
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<GetPersonInfoModel> call, Throwable t) {
+                Log.i("IDENTIFY", "get person Failed");
+            }
+        });
     }
 
     private void Speak(String text) {
