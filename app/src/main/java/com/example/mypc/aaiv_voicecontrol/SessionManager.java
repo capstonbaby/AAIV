@@ -18,9 +18,7 @@ public class SessionManager {
     private int PRIVATE_MODE = 0;
     private static final String PREP_NAME = "AAIVPref";
     private static final String IS_LOGIN = "IsLoggedIn";
-    public static final String KEY_POPULAR_PERSON_GROUP_ID = "popularPersonGroupId";
-    public static final String KEY_NORMAL_PERSON_GROUP_ID = "normalPersonGroupId";
-    public static final String KEY_FRESH_PERSON_GROUP_ID = "freshPersonGroupId";
+    public static final String KEY_PERSON_GROUP_ID = "personGroupId";
     public static final String KEY_USER_ID = "userId";
     public static final String KEY_USERNAME = "username";
 
@@ -30,12 +28,9 @@ public class SessionManager {
         editor = sharedPreferences.edit();
     }
 
-    public void CreateLoginSession(String popularPersonGroupId, String normalPersonGroupId, String freshPersonGroupId,
-                                   String userId, String username){
+    public void CreateLoginSession(String personGroupId, String userId, String username){
         editor.putBoolean(IS_LOGIN, true);
-        editor.putString(KEY_POPULAR_PERSON_GROUP_ID, popularPersonGroupId);
-        editor.putString(KEY_NORMAL_PERSON_GROUP_ID, normalPersonGroupId);
-        editor.putString(KEY_FRESH_PERSON_GROUP_ID, freshPersonGroupId);
+        editor.putString(KEY_PERSON_GROUP_ID, personGroupId);
         editor.putString(KEY_USER_ID, userId);
         editor.putString(KEY_USERNAME, username);
         editor.commit();
@@ -43,9 +38,7 @@ public class SessionManager {
 
     public HashMap<String, String> getUserDetails(){
         HashMap<String, String> user = new HashMap<>();
-        user.put(KEY_POPULAR_PERSON_GROUP_ID, sharedPreferences.getString(KEY_POPULAR_PERSON_GROUP_ID, null));
-        user.put(KEY_NORMAL_PERSON_GROUP_ID, sharedPreferences.getString(KEY_NORMAL_PERSON_GROUP_ID, null));
-        user.put(KEY_FRESH_PERSON_GROUP_ID, sharedPreferences.getString(KEY_FRESH_PERSON_GROUP_ID, null));
+        user.put(KEY_PERSON_GROUP_ID, sharedPreferences.getString(KEY_PERSON_GROUP_ID, null));
         user.put(KEY_USER_ID, sharedPreferences.getString(KEY_USER_ID, null));
         user.put(KEY_USERNAME, sharedPreferences.getString(KEY_USERNAME, null));
 

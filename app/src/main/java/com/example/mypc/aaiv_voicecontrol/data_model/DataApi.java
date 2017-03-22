@@ -17,7 +17,7 @@ public interface DataApi {
 
     @FormUrlEncoded
     @POST("CreateLog")
-    Call<MessageResponse> CreateLog(@Field("ImageUrl") String ImageUrl, @Field("Name") String name, @Field("userId") String userId);
+    Call<MessageResponse> CreateLog(@Field("ImageUrl") String ImageUrl, @Field("Name") String name, @Field("userId") String userId, @Field("personGroupId") String personGroupId);
 
     @FormUrlEncoded
     @POST("GetAllLogFromUser")

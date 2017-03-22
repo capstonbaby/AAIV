@@ -936,7 +936,11 @@ public class Camera2Fragment extends Fragment
                 showToast("Saved: " + mFile);
                 Log.d(TAG, mFile.toString());
 
-                File compressedImage = Compressor.getDefault(CameraActivity_2.getContext()).compressToFile(mFile);
+                Compressor.Builder builder = new Compressor.Builder(CameraActivity_2.getContext())
+                        .setQuality(75);
+                Compressor compressor = builder.build();
+
+                File compressedImage = compressor.compressToFile(mFile);
 
                 Intent intent = new Intent(getContext(), MainActivity.class);
                 intent.putExtra("imagefile", compressedImage);

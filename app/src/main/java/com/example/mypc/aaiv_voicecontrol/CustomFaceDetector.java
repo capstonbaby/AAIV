@@ -99,12 +99,10 @@ public class CustomFaceDetector extends Detector<Face> {
             faces = mDelegate.detect(frame);
             if (faces.size() > 0) {
                 try {
-                    Log.i("STREAM", "faces size: " + faces.size());
-                    new playSound().execute();
+                    //new playSound().execute();
                     new Capture(frame).execute();
                     Thread.sleep(3000);
 
-                    Log.i("STREAM", "after sleep");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -267,12 +265,10 @@ public class CustomFaceDetector extends Detector<Face> {
             if (faces != null) {
                 List<UUID> faceids = new ArrayList<>();
                 for (com.microsoft.projectoxford.face.contract.Face face : faces) {
-
                     faceids.add(face.faceId);
                 }
 
-                new FaceIdentify(Constants.getPopularPersonGroupId(), faceids.toArray(new UUID[faceids.size()])).execute();
-
+                new FaceIdentify(Constants.getPersonGroupId(), faceids.toArray(new UUID[faceids.size()])).execute();
             }
         }
     }
@@ -310,11 +306,7 @@ public class CustomFaceDetector extends Detector<Face> {
         @Override
         protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
             if (identifyResults != null) {
-                GetPersonInfo(identifyResults);
-            } else if (mPersonGroupId.equals(Constants.getPopularPersonGroupId())) {
-                new FaceIdentify(Constants.getNormalPersonGroupId(), mFaceIds).execute();
-            } else if (mPersonGroupId.equals(Constants.getNormalPersonGroupId())) {
-                new FaceIdentify(Constants.getFreshPersonGroupId(), mFaceIds).execute();
+                new PersonInfo(Constants.getPersonGroupId(), identifyResults).execute();
             }
         }
     }
@@ -341,7 +333,7 @@ public class CustomFaceDetector extends Detector<Face> {
                         identifyResults) {
                     if (identifyResult.candidates.size() > 0) {
                         final String personname = client.getPerson(mPersonGroupId, identifyResult.candidates.get(0).personId).name;
-                        personIdentifyResultText += personname + ", ";
+                        personIdentifyResultText += personname + ". ";
                     }
                 }
             } catch (ClientException e) {
@@ -357,7 +349,7 @@ public class CustomFaceDetector extends Detector<Face> {
             super.onPostExecute(aVoid);
 
 
-            Log.i("IDENTIFY", personIdentifyResultText);
+            Log.i("IDENTIFY", "Person name:" + personIdentifyResultText);
             mtvResult.post(new Runnable() {
                 @Override
                 public void run() {

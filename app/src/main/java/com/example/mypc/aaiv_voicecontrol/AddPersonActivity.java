@@ -53,6 +53,7 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -121,6 +122,17 @@ public class AddPersonActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         context = getApplicationContext();
 
+        session = new SessionManager(getApplicationContext());
+        Log.d("isLogin", session.isLoggedIn() ? "logged in" : "not logged in");
+
+        session.checkLoggedIn();
+
+
+        HashMap<String, String> user = session.getUserDetails();
+        Constants.setPersonGroupId(user.get(session.KEY_PERSON_GROUP_ID));
+        Constants.setUserId(user.get(session.KEY_USER_ID));
+        Constants.setUsername(user.get(session.KEY_USERNAME));
+
         txtPersonName = (TextInputLayout) findViewById(R.id.input_layout_name);
         txtPersonDes = (TextInputLayout) findViewById(R.id.input_layout_des);
         bt_cretePerson = (Button) findViewById(R.id.bt_create);
@@ -186,7 +198,7 @@ public class AddPersonActivity extends AppCompatActivity {
                             services.CreatePerson(
                                     personName,
                                     personDes,
-                                    Constants.getFreshPersonGroupId()
+                                    Constants.getPersonGroupId()
                             ).enqueue(new Callback<AddPersonResponse>() {
                                 @Override
                                 public void onResponse(Call<AddPersonResponse> call, Response<AddPersonResponse> response) {
@@ -195,7 +207,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                         DataService service = new DataService();
 
                                         //create person in DB
-                                        service.CreatePerson(Constants.getFreshPersonGroupId(), personId, personName, personDes)
+                                        service.CreatePerson(Constants.getPersonGroupId(), personId, personName, personDes)
                                                 .enqueue(new Callback<ResponseModel>() {
                                                     @Override
                                                     public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
@@ -207,9 +219,9 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                         File imageFile = new File(imgUrl);
                                                                         if (imageFile.exists()) {
                                                                             File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                            new Uploader(compressedImage, Constants.getFreshPersonGroupId(), personId).execute();
+                                                                            new Uploader(compressedImage, Constants.getPersonGroupId(), personId).execute();
                                                                         } else {
-                                                                            new AddPersonFace(Constants.getFreshPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
+                                                                            new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
                                                                         }
                                                                         if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
                                                                             if (logFile != null) {
@@ -234,8 +246,8 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                                         });
                                                                                     }
                                                                                 });
-                                                                                new TrainPersonGroup().execute(Constants.getFreshPersonGroupId());
                                                                             }
+                                                                            new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                                         }
                                                                     }
                                                                 } else {
@@ -484,11 +496,7 @@ public class AddPersonActivity extends AppCompatActivity {
             bt_train.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(person != null){
-                        new TrainPersonGroup().execute(person.personGroupId);
-                    }else {
-                        new TrainPersonGroup().execute(Constants.getFreshPersonGroupId());
-                    }
+                    new TrainPersonGroup().execute(Constants.getPersonGroupId());
                 }
             });
         }

@@ -35,7 +35,7 @@ public class DataService {
         Retrofit retrofit = getRetrofitDataApi();
         DataApi dataApi = retrofit.create(DataApi.class);
 
-        return dataApi.CreateLog(ImageUrl, name, Constants.getUserId());
+        return dataApi.CreateLog(ImageUrl, name, Constants.getUserId(), Constants.getPersonGroupId());
     }
 
     public Call<List<LogResponse>> GetAllLogFromUser(String userId) {

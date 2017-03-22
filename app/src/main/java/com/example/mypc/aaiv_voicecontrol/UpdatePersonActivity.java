@@ -21,6 +21,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -44,6 +45,7 @@ import com.example.mypc.aaiv_voicecontrol.person_model.Person;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import butterknife.BindView;
@@ -89,6 +91,17 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
         ButterKnife.bind(this);
         context = getApplicationContext();
         setTitle("Người thân");
+
+        session = new SessionManager(getApplicationContext());
+        Log.d("isLogin", session.isLoggedIn() ? "logged in" : "not logged in");
+
+        session.checkLoggedIn();
+
+
+        HashMap<String, String> user = session.getUserDetails();
+        Constants.setPersonGroupId(user.get(session.KEY_PERSON_GROUP_ID));
+        Constants.setUserId(user.get(session.KEY_USER_ID));
+        Constants.setUsername(user.get(session.KEY_USERNAME));
 
         mProgressBar = (ProgressBar) findViewById(R.id.pb_show_persons);
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_persons);
@@ -192,7 +205,7 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
         tvNoPerson.setVisibility(View.INVISIBLE);
 
         DataService service = new DataService();
-        service.GetPeopleOfuser(Constants.getUserId()).enqueue(new Callback<GetPeopleModel>() {
+        service.GetPeopleInGroup(Constants.getPersonGroupId()).enqueue(new Callback<GetPeopleModel>() {
             @Override
             public void onResponse(Call<GetPeopleModel> call, Response<GetPeopleModel> response) {
                 if (response.isSuccessful()) {

@@ -41,22 +41,32 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.mypc.aaiv_voicecontrol.Translation.Get;
+import com.example.mypc.aaiv_voicecontrol.Translation.TranslationAPIService;
+import com.example.mypc.aaiv_voicecontrol.Translation.TranslationApiUtils;
 import com.example.mypc.aaiv_voicecontrol.data_model.GetPersonInfoModel;
 import com.example.mypc.aaiv_voicecontrol.data_model.MessageResponse;
 import com.example.mypc.aaiv_voicecontrol.data_model.PersonModel;
+import com.example.mypc.aaiv_voicecontrol.person_model.AddPersonResponse;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
 import com.example.mypc.aaiv_voicecontrol.services.MainServices;
 import com.example.mypc.aaiv_voicecontrol.services.ObjectService;
+import com.example.mypc.aaiv_voicecontrol.services.PersonServices;
 import com.example.mypc.aaiv_voicecontrol.services.SpeechServices;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.Face;
 import com.microsoft.projectoxford.face.contract.IdentifyResult;
 import com.microsoft.projectoxford.face.rest.ClientException;
+import com.microsoft.projectoxford.vision.VisionServiceClient;
+import com.microsoft.projectoxford.vision.contract.AnalysisResult;
+import com.microsoft.projectoxford.vision.rest.VisionServiceException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -160,9 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         HashMap<String, String> user = session.getUserDetails();
-        Constants.setPopularPersonGroupId(user.get(session.KEY_POPULAR_PERSON_GROUP_ID));
-        Constants.setNormalPersonGroupId(user.get(session.KEY_NORMAL_PERSON_GROUP_ID));
-        Constants.setFreshPersonGroupId(user.get(session.KEY_FRESH_PERSON_GROUP_ID));
+        Constants.setPersonGroupId(user.get(session.KEY_PERSON_GROUP_ID));
         Constants.setUserId(user.get(session.KEY_USER_ID));
         Constants.setUsername(user.get(session.KEY_USERNAME));
 
@@ -175,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onShake(int count) {
-                if(count == 2){
+                if (count == 2) {
                     startSpeechToText("Sẵn sàng", SPEECH_RECOGNITION_CODE, SPEECH_LANGUAGE_VIE);
                 }
             }
@@ -294,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
@@ -346,7 +354,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Map doInBackground(Void... params) {
             try {
-                return cloudinary.uploader().upload(compressedFile, ObjectUtils.emptyMap());
+                if(capture_mode.equals(VIEW_RECOGNITION_MODE) || capture_mode.equals(OBJECT_RECOGNITION_MODE)){
+                    return cloudinary.uploader().upload(compressedFile, ObjectUtils.emptyMap());
+                }else {
+                    return cloudinary.uploader().upload(compressedFile, ObjectUtils.asMap(
+                            "eager",
+                            Arrays.asList(
+                                    new Transformation().width(400).height(400).gravity("faces").crop("thumb")
+                            )
+                    ));
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;
@@ -356,27 +373,24 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Map map) {
             if (map != null) {
-                String url = (String) map.get("url");
-                imgUrl = url;
+
                 switch (capture_mode) {
                     case FACE_RECOGNITION_MODE: {
+                        String url = (String) ((Map)(((ArrayList) map.get("eager")).get(0))).get("url");
+                        Log.d("imgurl", url);
                         new FaceDetection().execute(url);
                         break;
                     }
                     case OBJECT_RECOGNITION_MODE: {
-                        Log.d("imgurl", imgUrl);
-                        new DetectObject(imgUrl).execute();
+                        String url = (String) map.get("url");
+                        Log.d("imgurl", url);
+                        new DetectObject(url).execute();
                         break;
                     }
                     case VIEW_RECOGNITION_MODE: {
-                        result = mainServices.DetectVision(imgUrl).description.captions.get(0).text;
-                        mTvResult.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mTvResult.setText(result);
-                            }
-                        });
-                        mSpeechServices.sendGet(result, mTextToSpeech);
+                        String url = (String) map.get("url");
+                        Log.d("imgurl", url);
+                        new DetectView().execute(url);
                         break;
                     }
 
@@ -420,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
                     faceids.add(face.faceId);
                 }
 
-                new FaceIdentify(Constants.getPopularPersonGroupId(), faceids.toArray(new UUID[faceids.size()])).execute();
+                new FaceIdentify(Constants.getPersonGroupId(), faceids.toArray(new UUID[faceids.size()])).execute();
 
                 if (faces.length == 1) {
                     personDetectResultText = "Có một người " + (faces[0].faceAttributes.gender.equals("male") ? "đàn ông" : "phụ nữ");
@@ -473,11 +487,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(com.microsoft.projectoxford.face.contract.IdentifyResult[] identifyResults) {
             if (identifyResults != null) {
-                GetPersonInfo(identifyResults);
-            } else if (mPersonGroupId.equals(Constants.getPopularPersonGroupId())) {
-                new FaceIdentify(Constants.getNormalPersonGroupId(), mFaceIds).execute();
-            } else if (mPersonGroupId.equals(Constants.getNormalPersonGroupId())) {
-                new FaceIdentify(Constants.getFreshPersonGroupId(), mFaceIds).execute();
+                //GetPersonInfo(identifyResults);
+                new PersonInfo(identifyResults, Constants.getPersonGroupId()).execute();
             } else {
                 mTvResult.post(new Runnable() {
                     @Override
@@ -503,25 +514,45 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... params) {
             Log.d("identify", "Person");
-
+            FaceServiceClient client = Constants.getmFaceServiceClient();
             for (final com.microsoft.projectoxford.face.contract.IdentifyResult identifyResult :
                     identifyResults) {
-
-
+                if (identifyResult.candidates.size() > 0) {
+                    final String personname;
+                    try {
+                        personname = client.getPerson(personGroupId, identifyResult.candidates.get(0).personId).name;
+                        personIdentifyResultText += personname + ". ";
+                    } catch (ClientException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
+            Log.d("identify", "Person name: " + personIdentifyResultText);
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            mTvResult.post(new Runnable() {
-                @Override
-                public void run() {
-                    mTvResult.setText(personIdentifyResultText);
-                    Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
-                }
-            });
+            if(personIdentifyResultText.equals("")){
+                mTvResult.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTvResult.setText(personDetectResultText);
+                        Speak(personDetectResultText, SPEECH_ONDONE_CONFIRMATION);
+                    }
+                });
+            }else {
+                mTvResult.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mTvResult.setText(personIdentifyResultText);
+                        Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
+                    }
+                });
+            }
         }
     }
 
@@ -636,6 +667,55 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public class DetectView extends AsyncTask<String, Void, AnalysisResult>{
+
+        @Override
+        protected AnalysisResult doInBackground(String... params) {
+            VisionServiceClient client = Constants.getmVisionServiceClient();
+            try {
+                return client.describe(params[0], 1);
+            } catch (VisionServiceException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final AnalysisResult analysisResult) {
+            if(analysisResult != null){
+
+                String key = "AIzaSyDOi-0A_dUQ0CDIQU_ku2SiYpdZxwP6BtY";
+                String source = "en";
+                String target = "vi";
+
+                TranslationAPIService transApiService = TranslationApiUtils.getAPIService();
+
+                transApiService.saveGet(key,source,target,analysisResult.description.captions.get(0).text).enqueue(new Callback<Get>() {
+                    @Override
+                    public void onResponse(Call<Get> call, Response<Get> response) {
+                        Log.d("load", response.body().toString());
+                        if (response.isSuccessful()){
+                            final String mTranslatedString = response.body().getData().getTranslations().get(0).getTranslatedText();
+                            mTvResult.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mTvResult.setText(mTranslatedString);
+                                    Speak(mTranslatedString, SPEECH_ONDONE_NOREQUEST);
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Get> call, Throwable t) {
+                        Log.d("load", "failed");
+                        t.printStackTrace();
+                    }
+                });
+            }
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -659,10 +739,8 @@ public class MainActivity extends AppCompatActivity {
                         intent.putExtra("capture_mode", VIEW_RECOGNITION_MODE);
                         startActivity(intent);
                     } else if (text.equals(Constants.getRepeatResultCommand().toLowerCase())) {
-                        if (personIdentifyResultText != "") {
-                            Speak(personIdentifyResultText, SPEECH_ONDONE_NOREQUEST);
-                        } else if (personDetectResultText != "") {
-                            Speak(personDetectResultText, SPEECH_ONDONE_NOREQUEST);
+                        if (mTvResult.getText().toString() != "") {
+                            Speak(mTvResult.getText().toString(), SPEECH_ONDONE_NOREQUEST);
                         } else {
                             Speak("Không có", SPEECH_ONDONE_NOREQUEST);
                         }
@@ -716,6 +794,7 @@ public class MainActivity extends AppCompatActivity {
                                 t.printStackTrace();
                             }
                         });
+
                     }
                     break;
                 }

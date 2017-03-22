@@ -2,6 +2,7 @@ package com.example.mypc.aaiv_voicecontrol;
 
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.mypc.aaiv_voicecontrol.data_model.LoginResponse;
 import com.example.mypc.aaiv_voicecontrol.services.DataService;
@@ -70,14 +72,11 @@ public class LoginActivity extends AppCompatActivity {
                     public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                         if(response.isSuccessful()){
                             if(response.body().success){
-                                String popularPersonGroupId = response.body().data.popular_personGroupId;
-                                String normalPersonGroupId = response.body().data.normal_personGroupId;
-                                String freshPersonGroupId = response.body().data.fresh_personGroupId;
+                                String personGroupId = response.body().data.personGroupId;
                                 String userId = response.body().data.userId;
                                 String username = response.body().data.username;
 
-                                sessionManager.CreateLoginSession(popularPersonGroupId, normalPersonGroupId, freshPersonGroupId,
-                                                                    userId, username);
+                                sessionManager.CreateLoginSession(personGroupId, userId, username);
 
                                 pb_login.setVisibility(View.INVISIBLE);
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
@@ -100,5 +99,26 @@ public class LoginActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+    boolean doubleBackToExitPressedOnce = false;
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press BACK again to quit.", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce = false;
+            }
+        }, 2000);
     }
 }
