@@ -373,10 +373,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Map map) {
             if (map != null) {
-
                 switch (capture_mode) {
                     case FACE_RECOGNITION_MODE: {
                         String url = (String) ((Map)(((ArrayList) map.get("eager")).get(0))).get("url");
+                        imgUrl = url;
                         Log.d("imgurl", url);
                         new FaceDetection().execute(url);
                         break;
