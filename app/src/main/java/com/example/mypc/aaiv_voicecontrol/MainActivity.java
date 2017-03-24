@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-        setTitle("AAIV");
+        setTitle("See4U");
 
         session = new SessionManager(getApplicationContext());
         Log.d("isLogin", session.isLoggedIn() ? "logged in" : "not logged in");

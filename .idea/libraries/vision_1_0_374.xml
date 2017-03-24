@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="vision-1.0.374">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.microsoft.projectoxford/vision/1.0.374/res" />
-      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.microsoft.projectoxford/vision/1.0.374/jars/libs/commons-io-2.4.jar!/" />
-      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.microsoft.projectoxford/vision/1.0.374/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.android/build-cache/1497f0241a803207cb5d7177bbe86ba2a4cd6847/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/1497f0241a803207cb5d7177bbe86ba2a4cd6847/output/jars/libs/commons-io-2.4.jar!/" />
+      <root url="jar://$USER_HOME$/.android/build-cache/1497f0241a803207cb5d7177bbe86ba2a4cd6847/output/jars/classes.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

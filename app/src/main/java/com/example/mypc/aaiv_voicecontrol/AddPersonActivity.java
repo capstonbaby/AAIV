@@ -247,9 +247,9 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                                     }
                                                                                 });
                                                                             }
-                                                                            new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                                         }
                                                                     }
+                                                                    new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                                 } else {
 
                                                                     progressBar.post(new Runnable() {
@@ -338,7 +338,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                         progressBar.setVisibility(View.VISIBLE);
                                     }
                                 });
-                                services.UpdatePerson(personId, person.personGroupId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
+                                services.UpdatePerson(personId, Constants.getPersonGroupId(), txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
                                         .enqueue(new Callback<ResponseModel>() {
                                             @Override
                                             public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
@@ -350,9 +350,9 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 File imageFile = new File(imgUrl);
                                                                 if (imageFile.exists()) {
                                                                     File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                    new Uploader(compressedImage, person.personGroupId, personId).execute();
+                                                                    new Uploader(compressedImage, Constants.getPersonGroupId(), personId).execute();
                                                                 } else {
-                                                                    new AddPersonFace(person.personGroupId, imgUrl, personId).execute(UUID.fromString(personId));
+                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
                                                                 }
                                                                 if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
                                                                     if (logFile != null) {
@@ -371,10 +371,10 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                             }
 
                                                                         });
-                                                                        new TrainPersonGroup().execute(person.personGroupId);
                                                                     }
                                                                 }
                                                             }
+                                                            new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                         } else {
                                                             progressBar.post(new Runnable() {
                                                                 @Override
@@ -430,7 +430,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                         progressBar.setVisibility(View.VISIBLE);
                                     }
                                 });
-                                services.UpdatePerson(personId, person.personGroupId, txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
+                                services.UpdatePerson(personId, Constants.getPersonGroupId(), txtPersonName.getEditText().getText().toString(), txtPersonDes.getEditText().getText().toString())
                                         .enqueue(new Callback<ResponseModel>() {
                                             @Override
                                             public void onResponse(Call<ResponseModel> call, Response<ResponseModel> response) {
@@ -442,14 +442,12 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                 File imageFile = new File(imgUrl);
                                                                 if (imageFile.exists()) {
                                                                     File compressedImage = Compressor.getDefault(AddPersonActivity.this).compressToFile(imageFile);
-                                                                    new Uploader(compressedImage, person.personGroupId, personId).execute();
+                                                                    new Uploader(compressedImage, Constants.getPersonGroupId(), personId).execute();
                                                                 } else {
-                                                                    new AddPersonFace(person.personGroupId, imgUrl, personId).execute(UUID.fromString(personId));
-                                                                }
-                                                                if (imgUrl.equals(mImagePaths.get(mImagePaths.size() - 1))) {
-                                                                    new TrainPersonGroup().execute(person.personGroupId);
+                                                                    new AddPersonFace(Constants.getPersonGroupId(), imgUrl, personId).execute(UUID.fromString(personId));
                                                                 }
                                                             }
+                                                            new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                         } else {
                                                             progressBar.post(new Runnable() {
                                                                 @Override
@@ -493,12 +491,7 @@ public class AddPersonActivity extends AppCompatActivity {
                     break;
                 }
             }
-            bt_train.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    new TrainPersonGroup().execute(Constants.getPersonGroupId());
-                }
-            });
+
         }
 
         ivAdd.setOnClickListener(new View.OnClickListener() {
@@ -509,6 +502,13 @@ public class AddPersonActivity extends AppCompatActivity {
                         .count(IMAGE_AMOUNT)
                         .multi()
                         .start(AddPersonActivity.this, REQUEST_IMAGE);
+            }
+        });
+
+        bt_train.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new TrainPersonGroup().execute(Constants.getPersonGroupId());
             }
         });
 
