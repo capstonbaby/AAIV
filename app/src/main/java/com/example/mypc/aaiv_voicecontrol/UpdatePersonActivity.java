@@ -308,8 +308,6 @@ public class UpdatePersonActivity extends AppCompatActivity implements SwipeRefr
                 intent = new Intent(this, ShowLogsActivity.class);
                 startActivity(intent);
                 break;
-            case R.id.quota:
-                break;
             case R.id.sign_out:
                 session.logoutUser();
                 break;

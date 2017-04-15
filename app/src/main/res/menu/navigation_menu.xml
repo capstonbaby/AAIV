@@ -17,10 +17,6 @@
             android:id="@+id/logs"
             android:icon="@drawable/ic_history_black_24dp"
             android:title="Lịch Sử" />
-        <item
-            android:id="@+id/quota"
-            android:icon="@drawable/ic_visibility_black_24dp"
-            android:title="Quota" />
     </group>
     <group
         android:id="@+id/menu_navigation"

@@ -32,7 +32,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        Constants.setApiHost("192.168.0.12");
+        Constants.setApiHost("192.168.43.51");
 
         sessionManager = new SessionManager(getApplicationContext());
 

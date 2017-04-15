@@ -8,6 +8,8 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+
+
     <style name="AppTheme.NoActionBar" parent="AppTheme">
         <item name="windowActionBar">true</item>
         <item name="windowNoTitle">true</item>
@@ -39,5 +41,10 @@
         <item name="android:background">@drawable/train_button</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:elevation" tools:targetApi="lollipop">4dp</item>
+    </style>
+
+    <style name="AppAlertDialogContent" parent="Theme.AppCompat.DayNight">
+        <!-- To tint EditText and TimePicker -->
+        <item name="colorAccent">@color/colorAccent</item>
     </style>
 </resources>

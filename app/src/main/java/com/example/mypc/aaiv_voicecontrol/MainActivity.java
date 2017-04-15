@@ -271,14 +271,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 break;
             case R.id.setting:
-                intent = new Intent(this, StartUpActivity.class);
+                intent = new Intent(this, PreferenceActivity.class);
                 startActivity(intent);
                 break;
             case R.id.logs:
                 intent = new Intent(this, ShowLogsActivity.class);
                 startActivity(intent);
-                break;
-            case R.id.quota:
                 break;
             case R.id.sign_out:
                 session.logoutUser();
@@ -522,6 +520,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         personname = client.getPerson(personGroupId, identifyResult.candidates.get(0).personId).name;
                         personIdentifyResultText += personname + ". ";
+                        Log.d("Accuracy", String.valueOf(identifyResult.candidates.get(0).confidence));
                     } catch (ClientException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
@@ -811,6 +810,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     public void startSpeechToText(String promt, int mode, String language) {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
@@ -830,6 +830,8 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+
 
     private void SetUpText2Speech() {
         mTextToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {

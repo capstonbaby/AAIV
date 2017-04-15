@@ -183,6 +183,7 @@ public class AddPersonActivity extends AppCompatActivity {
                     bt_cretePerson.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            Log.d("training", "Start");
                             PersonServices services = new PersonServices();
                             final String personName = txtPersonName.getEditText().getText().toString();
                             final String personDes = txtPersonDes.getEditText().getText().toString();
@@ -251,7 +252,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                                     }
                                                                     new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                                 } else {
-
+                                                                    new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                                     progressBar.post(new Runnable() {
                                                                         @Override
                                                                         public void run() {
@@ -376,6 +377,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                             }
                                                             new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                         } else {
+                                                            new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                             progressBar.post(new Runnable() {
                                                                 @Override
                                                                 public void run() {
@@ -449,6 +451,7 @@ public class AddPersonActivity extends AppCompatActivity {
                                                             }
                                                             new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                         } else {
+                                                            new TrainPersonGroup().execute(Constants.getPersonGroupId());
                                                             progressBar.post(new Runnable() {
                                                                 @Override
                                                                 public void run() {
@@ -573,8 +576,6 @@ public class AddPersonActivity extends AppCompatActivity {
             case R.id.logs:
                 intent = new Intent(this, ShowLogsActivity.class);
                 startActivity(intent);
-                break;
-            case R.id.quota:
                 break;
             case R.id.sign_out:
                 session.logoutUser();
@@ -741,6 +742,8 @@ public class AddPersonActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.INVISIBLE);
                     }
                 });
+                Log.d("training", "Done");
+                Toast.makeText(AddPersonActivity.this, "Hoàn tất", Toast.LENGTH_SHORT).show();
             }
         }
     }

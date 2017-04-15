@@ -171,7 +171,7 @@ public class Constants {
     public static final String ADD_PERSON_VIEW = "thêm người";
     public static final String AFFIRMATIVE = "có";
     public static final String NEGATIVE = "không";
-    public static final String CREATE_LOG_FILE = "lưu lại";
+    public static String CREATE_LOG_FILE = "lưu lại";
     public static final String SHOW_LOGS = "lịch sử";
     public static final String STREAM_DETECT = "quay";
 
@@ -215,5 +215,13 @@ public class Constants {
 
     public static void setUsername(String username) {
         Username = username;
+    }
+
+    public static String getCreateLogFile() {
+        return CREATE_LOG_FILE;
+    }
+
+    public static void setCreateLogFile(String createLogFile) {
+        CREATE_LOG_FILE = createLogFile;
     }
 }
