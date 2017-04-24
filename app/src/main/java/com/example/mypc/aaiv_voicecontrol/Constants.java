@@ -36,13 +36,13 @@ public class Constants {
 
 
     private static String SHOOTING_COMMAND = "Chụp";
-    private static String DETECT_PERSON_COMMAND = "Ai đó";
+    private static String DETECT_PERSON_COMMAND = "Ai đây";
     private static String DETECT_OBJECT_COMMAND = "Cái gì đó";
-    private static String DETECT_VIEW_COMMAND = "Cảnh gì đó";
+    private static String DETECT_VIEW_COMMAND = "Miêu tả";
     private static String REPEAT_RESULT_COMMAND = "nhắc lại";
     private static String NEW_PERSON_COMMAND = "thêm người mới";
     private static String ACCEPT_COMMAND = "Đồng ý";
-    private static String DENY_COMMAND = "Hủy";
+    private static String DENY_COMMAND = "Không";
     private static String SHOW_LOG_COMMAND = "lịch sử";
     private static String STREAM_DETECT_COMMAND = "quay";
 
@@ -171,7 +171,7 @@ public class Constants {
     public static final String ADD_PERSON_VIEW = "thêm người";
     public static final String AFFIRMATIVE = "có";
     public static final String NEGATIVE = "không";
-    public static String CREATE_LOG_FILE = "lưu lại";
+    public static String CREATE_LOG_FILE = "thêm người này";
     public static final String SHOW_LOGS = "lịch sử";
     public static final String STREAM_DETECT = "quay";
 

@@ -209,7 +209,7 @@ public class CameraActivity_2 extends AppCompatActivity {
                     });
 
                     mTextToSpeech.setLanguage(new Locale("vi", "VN"));
-                    Speak("Chạm vào màn hình để chụp", SPEECH_ONDONE_NOREQUEST);
+                    Speak("Chạm vào màn hình để nhận diện", SPEECH_ONDONE_NOREQUEST);
                     Log.d("setupt2s", "Setup finished");
                 } else if (status == TextToSpeech.ERROR) {
                     Toast.makeText(CameraActivity_2.this, "Setup Speech Failed", Toast.LENGTH_SHORT).show();
